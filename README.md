@@ -52,10 +52,10 @@ MENU_CACHE_FILE=menu_v2_out.json
 API_TIMEOUT=30
 
 # Restaurant Information (for menu generation)
-RESTAURANT_NAME=ChennaiMasala
-RESTAURANT_ADDRESS=2088 NE Stucki Ave, Hillsboro, OR 97124
-RESTAURANT_PHONE=503-531-9500
-RESTAURANT_WEBSITE=www.chennaimasala.net
+RESTAURANT_NAME=Your Restaurant Name
+RESTAURANT_ADDRESS=Address
+RESTAURANT_PHONE=999-999-9999
+RESTAURANT_WEBSITE=www.myrestaurant.com
 ```
 ## Logo file for PDF menu generation
 The script uses a file called restaurant_logo.jpeg. This is used to put your logo if one is available in the pdf file generated.
