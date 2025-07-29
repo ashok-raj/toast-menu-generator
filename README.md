@@ -1,4 +1,4 @@
-# Directory Structure
+# Project Structure
 ```bash
 toast-api/
 ├── .env                          # Environment variables
@@ -31,7 +31,14 @@ toast-api/
     ├── generate_menu.py
     └── menu_group_items.py      # Your existing script
 ```
-# Contents of .env
+# Requirements File (requirements.txt)
+```
+requests>=2.28.0
+python-dotenv>=1.0.0
+reportlab>=3.6.0
+```
+# Setup Requirements
+## Contents of .env
 ```bash
 # Toast Tab API Configuration
 TOAST_HOSTNAME=https://ws-api.toasttab.com
@@ -50,3 +57,32 @@ RESTAURANT_ADDRESS=2088 NE Stucki Ave, Hillsboro, OR 97124
 RESTAURANT_PHONE=503-531-9500
 RESTAURANT_WEBSITE=www.chennaimasala.net
 ```
+## Logo file for PDF menu generation
+The script uses a file called restaurant_logo.jpeg. This is used to put your logo if one is available in the pdf file generated.
+
+# Installation and Setup
+**Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+### Command Line Interface
+```bash
+# List all menu groups
+python main.py list-groups
+
+# Scan all groups (calls your existing processing script)
+python main.py scan-groups
+
+# Generate takeout menu with prices
+python main.py generate-menu --with-price
+
+# Generate 3rd party delivery menu
+python main.py generate-menu --filter-3pd
+
+# Clear all cached data
+python main.py clear-cache
+
+# Enable debug logging
+python main.py --log-level DEBUG list-groups
+```
+
