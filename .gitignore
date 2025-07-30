@@ -1,0 +1,13 @@
+.env
+menu_v2_out.json
+preview_menu.html
+setup-config
+takeout_menu.pdf
+takeout_menu.txt
+toast_api/__pycache__/
+toast_api/client/__pycache__/
+toast_api/config/__pycache__/
+toast_api/models/__pycache__/
+toast_api/services/__pycache__/
+toast_api/utils/__pycache__/
+token_cache.json
