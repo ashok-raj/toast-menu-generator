@@ -5,6 +5,8 @@ from ..utils.cache import DataCache
 from ..config.settings import config
 from ..utils.logger import logger
 from ..models.menu import Menu, MenuGroup, MenuItem
+import os
+import json
 
 class MenuService:
     """Service for menu operations."""
@@ -13,6 +15,23 @@ class MenuService:
         self.api_client = ToastAPIClient()
         self.use_cache = use_cache
         self.data_cache = DataCache(config.menu_cache_file) if use_cache else None
+        self.load_menu_data()
+
+    def load_menu_data(self):
+        """Load menu data from JSON file"""
+        menu_file = "menu_v2_out.json"
+        
+        if os.path.exists(menu_file):
+            try:
+                with open(menu_file, 'r') as f:
+                    self.menu_data = json.load(f)
+                print(f"✓ Loaded menu data from {menu_file}")
+            except Exception as e:
+                print(f"❌ Error loading menu data: {e}")
+                self.menu_data = None
+        else:
+            print(f"❌ Menu file {menu_file} not found")
+            self.menu_data = None
     
     def get_menu_data(self, force_refresh: bool = False) -> Dict[str, Any]:
         """Get menu data, using cache if available."""
@@ -126,4 +145,65 @@ class MenuService:
                 return menu
         
         return None
+    
+    def clear_cache(self):
+        """ Clear any cached data """
+        #Add cache clear logic here
+        cache_files = ['menu_v2_out.json', 'token_cache.json']
+        for cache_file in cache_files:
+            if os.path.exists(cache_file):
+                os.remove(cache_file)
+                logger.info(f"Removed cache file: {cache_file}") 
 
+        logger.info("Cache cleared successfully")
+
+    def search_items_by_name(self, search_term):
+        """Search for menu items by name"""
+        if not hasattr(self, 'menu_data') or not self.menu_data:
+            print("❌ No menu data available. Load menu data first.")
+            return []
+
+        found_items = []
+        search_term_lower = search_term.lower()
+
+        # Search through all menus
+        for menu in self.menu_data.get("menus", []):
+            menu_name = menu.get("name", "")
+
+            # Skip 3pd, owner, otter menus (unless you want to include them)
+            if any(term in menu_name.lower() for term in ["3pd", "owner", "otter"]):
+                continue
+
+            for group in menu.get("menuGroups", []):
+                group_name = group.get("name", "")
+
+                for item in group.get("menuItems", []):
+                    item_name = item.get("name", "")
+
+                    # Check if search term is in item name (case insensitive)
+                    if search_term_lower in item_name.lower():
+                        price = item.get("price")
+                        price_str = f"${price:.2f}" if price is not None else "N/A"
+
+                        found_items.append({
+                            'name': item_name,
+                            'price': price_str,
+                            'group': group_name,
+                            'menu': menu_name
+                        })
+
+            # Display results
+            if found_items:
+                print(f"✅ Found {len(found_items)} item(s) matching '{search_term}':")
+                print("-" * 60)
+
+                for item in found_items:
+                    print(f"✓ {item['name']}")
+                    print(f"  Price: {item['price']}")
+                    print(f"  Category: {item['group']}")
+                    print(f"  Menu: {item['menu']}")
+                    print()
+            else:
+                print(f"❌ No items found matching '{search_term}'")
+
+        return found_items
