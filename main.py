@@ -221,7 +221,6 @@ def generate_reports() -> int:
         logger.error(f"Error generating reports: {e}")
         return 1
 
-
 def search_items(search_term: str) -> int:
     """Search for menu items."""
     try:
@@ -235,18 +234,22 @@ def search_items(search_term: str) -> int:
         print(f"\n🔍 Found {len(results)} items matching '{search_term}':\n")
         
         for item_data in results:
-            item = item_data['item']
-            group = item_data['group']
-            menu = item_data['menu']
+            # Use the actual keys from menu_service.py
+            name = item_data['name']
+            price = item_data['price']
+            group_name = item_data['group']
+            menu_name = item_data['menu']
             
-            display_line = format_menu_item_display(item.name, item.price)
-            print(f"{display_line} ({group.name} - {menu.name})")
+            print(f"✓ {name}")
+            print(f"  Price: {price}")
+            print(f"  Category: {group_name}")
+            print(f"  Menu: {menu_name}")
+            print()
         
         return 0
     except Exception as e:
         logger.error(f"Error searching items: {e}")
         return 1
-
 
 def pricing_analysis() -> int:
     """Show pricing analysis."""
