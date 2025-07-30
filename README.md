@@ -37,6 +37,7 @@ requests>=2.28.0
 python-dotenv>=1.0.0
 reportlab>=3.6.0
 ```
+This has been only tested on Ubuntu. I was also able to get it to work in MacOS using brew and pip to install the required extensions.
 # Setup Requirements
 ## Contents of .env
 ```bash
