@@ -210,76 +210,131 @@ class ReportService:
         
         logger.info(f"💰 Pricing report saved to {output_file}")
         return output_file
-    
+
     def generate_takeout_menu_pdf(self, 
-                                 group_order: List[str],
-                                 include_prices: bool = False,
-                                 include_3pd: bool = False,
-                                 output_file: str = "takeout_menu.pdf",
-                                 logo_path: Optional[str] = None) -> str:
-        """Generate a professional PDF takeout menu."""
-        
+                             group_order: List[str],
+                             include_prices: bool = False,
+                             include_3pd: bool = False,
+                             output_file: str = "takeout_menu.pdf",
+                             logo_path: Optional[str] = None) -> str:
+        """Generate a professional PDF takeout menu with multi-page support."""
+    
         grouped_items = self.menu_service.get_grouped_menu_items(
             group_order=group_order,
             include_3pd=include_3pd,
             include_prices=include_prices
         )
-        
+    
         # Use provided logo path or automatically detected one
         logo_to_use = logo_path or self.logo_path
-        
+    
         # Create PDF
         c = canvas.Canvas(output_file, pagesize=letter)
         w, h = letter
-        
+    
         # Layout settings
         col_x = [inch * 0.5, w / 2 + inch * 0.2]
         price_x = [col_x[0] + 200, w - inch * 0.5]
-        col_y_start = h - inch * 2.0
+        col_y_start = h - inch * 2.5  # More space for header
         line_height = 14
+        margin_bottom = inch * 0.8  # Bottom margin for footer
         column = 0
         y = col_y_start
+        page_count = 1
         
-        # Header with logo
-        if logo_to_use and os.path.exists(logo_to_use):
-            try:
-                logo_width = 2.5 * inch
-                logo_height = 0.9 * inch
-                logo_x = (w - logo_width) / 2
-                logo_y = h - inch * 1.0
-                c.drawImage(logo_to_use, logo_x, logo_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
-                header_y = logo_y - 30
-                logger.info(f"✅ Logo added to PDF from: {logo_to_use}")
-            except Exception as e:
-                logger.error(f"❌ Failed to add logo to PDF: {e}")
+        def draw_header():
+            """Draw header with logo and restaurant info."""
+            nonlocal y
+            header_y = h - inch * 0.8
+            
+            # Header with logo
+            if logo_to_use and os.path.exists(logo_to_use):
+                try:
+                    logo_width = 2.5 * inch
+                    logo_height = 0.9 * inch
+                    logo_x = (w - logo_width) / 2
+                    logo_y = h - inch * 1.0
+                    c.drawImage(logo_to_use, logo_x, logo_y, width=logo_width, height=logo_height, preserveAspectRatio=True)
+                    header_y = logo_y - 30
+                    logger.info(f"✅ Logo added to PDF from: {logo_to_use}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to add logo to PDF: {e}")
+                    header_y = h - inch * 1.0
+            else:
                 header_y = h - inch * 1.0
-        else:
-            header_y = h - inch * 1.0
-            if logo_to_use:
-                logger.warning(f"Logo file not found at: {logo_to_use}")
+                if logo_to_use:
+                    logger.warning(f"Logo file not found at: {logo_to_use}")
+            
+            # Restaurant name
+            c.setFont("Helvetica-Bold", 18)
+            c.drawCentredString(w / 2, header_y, self.restaurant.name)
+            
+            # Tagline
+            c.setFont("Helvetica-Oblique", 12)
+            c.drawCentredString(w / 2, header_y - 25, "Reinvent the Taste of India")
+            
+            return header_y - 50  # Return Y position to start content
         
-        # Restaurant name
-        c.setFont("Helvetica-Bold", 18)
-        c.drawCentredString(w / 2, header_y, self.restaurant.name)
+        def draw_footer():
+            """Draw footer information."""
+            c.setFont("Helvetica", 8)
+            footer_y = margin_bottom * 0.6
+            
+            if self.restaurant.phone or self.restaurant.website:
+                c.drawString(inch * 0.5, footer_y + 28, f"Contact: {self.restaurant.formatted_contact}")
+            
+            if self.restaurant.address:
+                c.drawString(inch * 0.5, footer_y + 14, f"Address: {self.restaurant.address}")
+            
+            c.drawString(inch * 0.5, footer_y, "Menu items and prices subject to change.")
+            
+            # Page number
+            c.drawRightString(w - inch * 0.5, footer_y, f"Page {page_count}")
         
-        # Tagline
-        c.setFont("Helvetica-Oblique", 12)
-        c.drawCentredString(w / 2, header_y - 25, "Reinvent the Taste of India")
+        def start_new_page():
+            """Start a new page and reset variables."""
+            nonlocal y, column, page_count
+            
+            # Draw footer on current page before starting new one
+            draw_footer()
+            
+            # Start new page
+            c.showPage()
+            page_count += 1
+            
+            # Reset positioning
+            column = 0
+            y = draw_header()
+            c.setFont("Helvetica", 10)
         
-        # Menu content
+        def check_space_and_move_if_needed(lines_needed: int = 1):
+            """Check if we have enough space and move to next column/page if needed."""
+            nonlocal y, column
+            
+            space_needed = lines_needed * line_height
+            
+            if y - space_needed < margin_bottom:
+                if column < len(col_x) - 1:
+                    # Move to next column
+                    column += 1
+                    y = col_y_start
+                else:
+                    # Start new page
+                    start_new_page()
+        
+        # Draw initial header
+        y = draw_header()
         c.setFont("Helvetica", 10)
         
+        # Process each group
         for group_name in group_order:
             items = grouped_items.get(group_name, [])
             if not items:
                 continue
             
-            # Check if we need a new column
-            if y < inch + 80:
-                column += 1
-                if column >= len(col_x):
-                    break
-                y = col_y_start
+            # Calculate space needed for group header + at least 3 items
+            lines_needed = 2 + min(3, len(items))  # Header + items
+            check_space_and_move_if_needed(lines_needed)
             
             # Group header
             y -= line_height
@@ -290,37 +345,24 @@ class ReportService:
             # Items
             c.setFont("Helvetica", 9)
             for item in items:
-                if y < inch + 60:
-                    column += 1
-                    if column >= len(col_x):
-                        break
-                    y = col_y_start
-                    # Redraw group header
-                    y -= line_height
-                    c.setFont("Helvetica-Bold", 11)
-                    c.drawString(col_x[column], y, group_name)
-                    y -= line_height
-                    c.setFont("Helvetica", 9)
+                # Check if we need space for at least one more item
+                check_space_and_move_if_needed(1)
                 
+                # Draw item
                 c.drawString(col_x[column], y, f"• {item['name']}")
                 
                 if include_prices and item['formatted_price']:
                     c.drawRightString(price_x[column], y, item['formatted_price'])
-                
+            
                 y -= line_height
         
-        # Footer
-        c.setFont("Helvetica", 8)
-        footer_y = inch * 0.6
+            # Add some space after each group
+            y -= line_height * 0.5
+    
+        # Draw final footer
+        draw_footer()
         
-        if self.restaurant.phone or self.restaurant.website:
-            c.drawString(inch * 0.5, footer_y + 28, f"Contact: {self.restaurant.formatted_contact}")
-        
-        if self.restaurant.address:
-            c.drawString(inch * 0.5, footer_y + 14, f"Address: {self.restaurant.address}")
-        
-        c.drawString(inch * 0.5, footer_y, "Menu items and prices subject to change.")
-        
+        # Save the PDF
         c.save()
-        logger.info(f"📄 PDF menu saved to {output_file}")
+        logger.info(f"📄 PDF menu saved to {output_file} ({page_count} pages)")
         return output_file
