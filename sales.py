@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
 Toast Sales Summary Script
-Version: 2.5.0
+Version: 2.7.0
 
 Features:
 - Interactive Toast API sales data retrieval using Toast business dates
 - Offline analysis from saved JSON files
 - Business date handling for both single dates and date ranges
+- Restaurant-standard week reporting (Sunday-Saturday)
+- Optional debug mode (-d flag) for raw API data logging
 - Comprehensive sales reporting with tips and payment breakdowns
-- Debug mode with raw API data saving
 - Proper handling of payment status and void conditions
 
 Author: Assistant
@@ -20,16 +21,18 @@ import json
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Tuple
 import os
+import argparse
 from dotenv import load_dotenv
 from decimal import Decimal, ROUND_HALF_UP
 
 
 class ToastSalesAPIClient:
-    def __init__(self, hostname: str, client_id: str, client_secret: str, restaurant_guid: str):
+    def __init__(self, hostname: str, client_id: str, client_secret: str, restaurant_guid: str, debug_mode: bool = False):
         """Initialize Toast API client for sales data"""
         self.client_id = client_id
         self.client_secret = client_secret
         self.restaurant_guid = restaurant_guid
+        self.debug_mode = debug_mode
         
         # Clean hostname (remove protocol if present)
         if hostname.startswith('https://'):
@@ -142,23 +145,24 @@ class ToastSalesAPIClient:
                 orders = data if isinstance(data, list) else []
                 all_orders.extend(orders)
                 
-                # Save debug file
-                debug_filename = f"debug_orders_business_date_{formatted_business_date}_page_{page}.json"
-                try:
-                    with open(debug_filename, 'w') as f:
-                        json.dump({
-                            'page': page,
-                            'business_date': {
-                                'input_date': business_date,
-                                'formatted_business_date': formatted_business_date
-                            },
-                            'request_params': params,
-                            'orders_count': len(orders),
-                            'orders': data
-                        }, f, indent=2)
-                    print(f"DEBUG: Saved page {page} raw data to {debug_filename}")
-                except Exception as e:
-                    print(f"Warning: Could not save debug file: {e}")
+                # Save debug file only if debug mode is enabled
+                if self.debug_mode:
+                    debug_filename = f"debug_orders_business_date_{formatted_business_date}_page_{page}.json"
+                    try:
+                        with open(debug_filename, 'w') as f:
+                            json.dump({
+                                'page': page,
+                                'business_date': {
+                                    'input_date': business_date,
+                                    'formatted_business_date': formatted_business_date
+                                },
+                                'request_params': params,
+                                'orders_count': len(orders),
+                                'orders': data
+                            }, f, indent=2)
+                        print(f"DEBUG: Saved page {page} raw data to {debug_filename}")
+                    except Exception as e:
+                        print(f"Warning: Could not save debug file: {e}")
                 
                 if len(orders) < params["pageSize"]:
                     break
@@ -420,8 +424,8 @@ def get_business_date_input() -> str:
     yesterday = today - timedelta(days=1)
     
     print("Quick options:")
-    print(f"1. Today's business ({today})")
-    print(f"2. Yesterday's business ({yesterday})")
+    print(f"1. Today ({today})")
+    print(f"2. Yesterday ({yesterday})")
     print("3. Enter custom date")
     print("-" * 50)
     
@@ -480,7 +484,7 @@ def get_date_range_input() -> Tuple[str, str]:
     
     print("Choose an option:")
     print("1. Custom date range")
-    print("2. Quick options (this week, last week, this month, etc.)")
+    print("2. Pre-set sales periods")
     
     while True:
         choice = input("Enter your choice (1-2): ").strip()
@@ -490,6 +494,7 @@ def get_date_range_input() -> Tuple[str, str]:
     
     if choice == '1':
         # Custom date range
+        print("\nCustom Business Date Range:")
         while True:
             start_date = input("Enter start business date (YYYY-MM-DD): ").strip()
             try:
@@ -511,31 +516,43 @@ def get_date_range_input() -> Tuple[str, str]:
                 print("Invalid date format. Please use YYYY-MM-DD format.")
     
     else:
-        # Quick options
+        # Pre-set sales periods
         today = datetime.now().date()
-        yesterday = today - timedelta(days=1)
-        week_start = today - timedelta(days=today.weekday())  # Monday
-        last_week_start = week_start - timedelta(days=7)
-        last_week_end = week_start - timedelta(days=1)  # Sunday
-        month_start = today.replace(day=1)
-        last_month_end = month_start - timedelta(days=1)
-        last_month_start = last_month_end.replace(day=1)
         
-        print("\nQuick business date range options:")
-        print(f"1. This week ({week_start} to {today})")
-        print(f"2. Last week ({last_week_start} to {last_week_end})")
-        print(f"3. This month ({month_start} to {today})")
-        print(f"4. Last month ({last_month_start} to {last_month_end})")
-        print(f"5. Last 7 business days ({today - timedelta(days=6)} to {today})")
-        print(f"6. Last 30 business days ({today - timedelta(days=29)} to {today})")
-        print(f"7. Yesterday and today ({yesterday} to {today})")
+        # Calculate Sunday-Saturday weeks
+        days_since_sunday = (today.weekday() + 1) % 7  # Monday=0, Sunday=6 -> Sunday=0
+        this_week_start = today - timedelta(days=days_since_sunday)  # This Sunday
+        this_week_end = today  # Today
+        
+        # Previous week (Sunday to Saturday)
+        prev_week_start = this_week_start - timedelta(days=7)  # Previous Sunday
+        prev_week_end = this_week_start - timedelta(days=1)    # Previous Saturday
+        
+        # Month calculations
+        month_start = today.replace(day=1)
+        if today.month == 1:
+            last_month_start = today.replace(year=today.year-1, month=12, day=1)
+            last_month_end = today.replace(day=1) - timedelta(days=1)
+        else:
+            last_month_start = today.replace(month=today.month-1, day=1)
+            # Get last day of previous month
+            next_month = today.replace(day=1)
+            last_month_end = next_month - timedelta(days=1)
+        
+        print("\nPre-set Sales Periods:")
+        print(f"1. This week - Sunday to today ({this_week_start} to {this_week_end})")
+        print(f"2. Previous week - Sunday to Saturday ({prev_week_start} to {prev_week_end})")
+        print(f"3. This month - 1st to today ({month_start} to {today})")
+        print(f"4. Last month - complete ({last_month_start} to {last_month_end})")
+        print(f"5. Last 7 days ({today - timedelta(days=6)} to {today})")
+        print(f"6. Last 30 days ({today - timedelta(days=29)} to {today})")
         
         while True:
-            quick_choice = input("Enter your choice (1-7): ").strip()
+            quick_choice = input("Enter your choice (1-6): ").strip()
             if quick_choice == '1':
-                return str(week_start), str(today)
+                return str(this_week_start), str(this_week_end)
             elif quick_choice == '2':
-                return str(last_week_start), str(last_week_end)
+                return str(prev_week_start), str(prev_week_end)
             elif quick_choice == '3':
                 return str(month_start), str(today)
             elif quick_choice == '4':
@@ -544,10 +561,8 @@ def get_date_range_input() -> Tuple[str, str]:
                 return str(today - timedelta(days=6)), str(today)
             elif quick_choice == '6':
                 return str(today - timedelta(days=29)), str(today)
-            elif quick_choice == '7':
-                return str(yesterday), str(today)
             else:
-                print("Invalid choice. Please enter 1-7.")
+                print("Invalid choice. Please enter 1-6.")
 
 
 def format_currency(amount: Decimal) -> str:
@@ -644,10 +659,37 @@ def load_config() -> Dict[str, str]:
     return config
 
 
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(
+        description='Toast Sales Summary Script',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog='''
+Examples:
+  python sales.py                    # Normal mode (no debug files)
+  python sales.py -d                 # Debug mode (saves raw API responses)
+  python sales.py --debug            # Debug mode (long form)
+        '''
+    )
+    
+    parser.add_argument(
+        '-d', '--debug',
+        action='store_true',
+        help='Enable debug mode to save raw API responses to JSON files'
+    )
+    
+    return parser.parse_args()
+
+
 def main():
     """Main function with interactive interface"""
+    # Parse command line arguments
+    args = parse_arguments()
+    
     print("="*60)
-    print("TOAST SALES SUMMARY SCRIPT v2.5.0")
+    print("TOAST SALES SUMMARY SCRIPT v2.7.0")
+    if args.debug:
+        print("DEBUG MODE: Raw API responses will be saved to JSON files")
     print("="*60)
     
     # Choose data source
@@ -664,7 +706,8 @@ def main():
             hostname=config['hostname'],
             client_id=config['client_id'],
             client_secret=config['client_secret'],
-            restaurant_guid=config['restaurant_guid']
+            restaurant_guid=config['restaurant_guid'],
+            debug_mode=args.debug
         )
         
         print(f"Connecting to Toast API server: https://{client.hostname}")
