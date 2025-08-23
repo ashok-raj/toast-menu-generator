@@ -33,8 +33,8 @@ toast-api/
 ```
 # Requirements File (requirements.txt)
 ```
-requests>=2.28.0
-python-dotenv>=1.0.0
+requests==2.32.5
+python-dotenv==1.1.1
 reportlab>=3.6.0
 ```
 This has been only tested on Ubuntu. I was also able to get it to work in MacOS using brew and pip to install the required extensions.
@@ -85,5 +85,63 @@ python main.py clear-cache
 
 # Enable debug logging
 python main.py --log-level DEBUG list-groups
+```
+
+## Sales Analysis Script
+
+### sales.py
+A comprehensive Toast sales analysis script that provides detailed sales summaries and reporting.
+
+**Features:**
+- Interactive Toast API sales data retrieval using Toast business dates
+- Offline analysis from saved JSON files
+- Business date handling for both single dates and date ranges
+- Restaurant-standard week reporting (Sunday-Saturday)
+- Optional debug mode (-d flag) for raw API data logging
+- Comprehensive sales reporting with tips and payment breakdowns
+- Proper handling of payment status and void conditions
+
+**Usage Examples:**
+```bash
+# Today's sales (display only)
+python sales.py --today
+
+# Yesterday's complete report
+python sales.py --yesterday --all
+
+# Current week (Sunday to today)
+python sales.py --this-week
+
+# Complete previous week (Sun-Sat)
+python sales.py --last-week
+
+# Current month (1st to today)
+python sales.py --this-month
+
+# Complete previous month
+python sales.py --last-month
+
+# Current year (Jan 1st to today)
+python sales.py --this-year
+
+# Complete previous year
+python sales.py --last-year
+
+# Custom date range
+python sales.py --range 2025-08-01 2025-08-15
+
+# Save to JSON file
+python sales.py --today --file my_report.json
+
+# Debug mode (saves raw API responses)
+python sales.py --today --debug
+```
+
+**Installation:**
+Use the same virtual environment setup as the main project:
+```bash
+source ~/.python/araj-venv/bin/activate
+pip install -r requirements.txt
+python sales.py --today
 ```
 
