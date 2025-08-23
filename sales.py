@@ -61,12 +61,14 @@ class ToastSalesAPIClient:
         }
         
         try:
-            print(f"Authenticating with: {auth_url}")
+            if self.debug_mode:
+                print(f"Authenticating with: {auth_url}")
             response = requests.post(auth_url, headers=headers, json=payload)
             
-            print(f"Response status: {response.status_code}")
-            if response.status_code != 200:
-                print(f"Response content: {response.text}")
+            if self.debug_mode:
+                print(f"Response status: {response.status_code}")
+                if response.status_code != 200:
+                    print(f"Response content: {response.text}")
             
             response.raise_for_status()
             
@@ -75,14 +77,17 @@ class ToastSalesAPIClient:
             
             if self.access_token:
                 self.token_expires_at = datetime.now() + timedelta(minutes=55)
-                print("Authentication successful")
+                if self.debug_mode:
+                    print("Authentication successful")
                 return True
             else:
-                print("Authentication failed: No access token received")
+                if self.debug_mode:
+                    print("Authentication failed: No access token received")
                 return False
                 
         except requests.exceptions.RequestException as e:
-            print(f"Authentication error: {e}")
+            if self.debug_mode:
+                print(f"Authentication error: {e}")
             return False
     
     def _ensure_authenticated(self) -> bool:
@@ -108,10 +113,12 @@ class ToastSalesAPIClient:
         try:
             formatted_business_date = self._format_business_date(business_date)
         except ValueError as e:
-            print(f"Date formatting error: {e}")
+            if self.debug_mode:
+                print(f"Date formatting error: {e}")
             return None
         
-        print(f"Using business date: {formatted_business_date} (from {business_date})")
+        if self.debug_mode:
+            print(f"Using business date: {formatted_business_date} (from {business_date})")
         
         url = f"{self.api_base_url}/orders/v2/ordersBulk"
         headers = {
@@ -132,12 +139,14 @@ class ToastSalesAPIClient:
                 params["page"] = page
             
             try:
-                print(f"Fetching orders page {page} (current total: {len(all_orders)})...")
+                if self.debug_mode:
+                    print(f"Fetching orders page {page} (current total: {len(all_orders)})...")
                 response = requests.get(url, headers=headers, params=params)
                 
                 if response.status_code != 200:
-                    print(f"API Error - Status: {response.status_code}")
-                    print(f"Response content: {response.text}")
+                    if self.debug_mode:
+                        print(f"API Error - Status: {response.status_code}")
+                        print(f"Response content: {response.text}")
                 
                 response.raise_for_status()
                 
@@ -160,7 +169,7 @@ class ToastSalesAPIClient:
                                 'orders_count': len(orders),
                                 'orders': data
                             }, f, indent=2)
-                        print(f"DEBUG: Saved page {page} raw data to {debug_filename}")
+                        print(f"Debug: Saved page {page} raw data to {debug_filename}")
                     except Exception as e:
                         print(f"Warning: Could not save debug file: {e}")
                 
@@ -170,15 +179,18 @@ class ToastSalesAPIClient:
                 page += 1
                 
             except requests.exceptions.RequestException as e:
-                print(f"Error retrieving orders: {e}")
+                if self.debug_mode:
+                    print(f"Error retrieving orders: {e}")
                 return None
         
-        print(f"Retrieved {len(all_orders)} total orders for business date {formatted_business_date}")
+        if self.debug_mode:
+            print(f"Retrieved {len(all_orders)} total orders for business date {formatted_business_date}")
         return all_orders
 
     def get_orders_by_date_range(self, start_date: str, end_date: str) -> Optional[List[Dict]]:
         """Retrieve orders for a date range using business dates"""
-        print(f"Using business date range method: {start_date} to {end_date}")
+        if self.debug_mode:
+            print(f"Using business date range method: {start_date} to {end_date}")
         
         all_orders = []
         current_date = datetime.strptime(start_date, "%Y-%m-%d")
@@ -186,7 +198,8 @@ class ToastSalesAPIClient:
         
         while current_date <= end_dt:
             date_str = current_date.strftime("%Y-%m-%d")
-            print(f"Fetching business date: {date_str}")
+            if self.debug_mode:
+                print(f"Fetching business date: {date_str}")
             
             orders = self.get_orders_by_business_date(date_str)
             if orders:
@@ -194,13 +207,60 @@ class ToastSalesAPIClient:
             
             current_date += timedelta(days=1)
         
-        print(f"Retrieved {len(all_orders)} total orders across business date range")
+        if self.debug_mode:
+            print(f"Retrieved {len(all_orders)} total orders across business date range")
         return all_orders
+    
+    def get_dining_options(self) -> Optional[Dict[str, str]]:
+        """Retrieve dining options and create GUID-to-name mapping"""
+        if not self._ensure_authenticated():
+            if self.debug_mode:
+                print("Failed to authenticate for dining options")
+            return None
+        
+        url = f"{self.api_base_url}/config/v2/diningOptions"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Toast-Restaurant-External-ID": self.restaurant_guid,
+            "Content-Type": "application/json"
+        }
+        
+        try:
+            if self.debug_mode:
+                print("Fetching dining option names...")
+            response = requests.get(url, headers=headers)
+            
+            if response.status_code != 200:
+                if self.debug_mode:
+                    print(f"API Error - Status: {response.status_code}")
+                    print(f"Response content: {response.text}")
+                return None
+            
+            response.raise_for_status()
+            dining_options = response.json()
+            
+            # Create GUID-to-name mapping
+            dining_option_map = {}
+            for option in dining_options:
+                guid = option.get('guid')
+                name = option.get('name', 'Unknown Option')
+                if guid:
+                    dining_option_map[guid] = name
+            
+            if self.debug_mode:
+                print(f"Retrieved {len(dining_option_map)} dining option names")
+            return dining_option_map
+            
+        except requests.exceptions.RequestException as e:
+            if self.debug_mode:
+                print(f"Error retrieving dining options: {e}")
+            return None
 
 
 class SalesSummaryAnalyzer:
-    def __init__(self):
+    def __init__(self, dining_option_map: Optional[Dict[str, str]] = None):
         self.orders = []
+        self.dining_option_map = dining_option_map or {}
     
     def analyze_sales_summary(self, orders: List[Dict]) -> Dict:
         """Analyze orders to create sales summary"""
@@ -214,15 +274,21 @@ class SalesSummaryAnalyzer:
             'total_tips': Decimal('0.00'),
             'total_tax': Decimal('0.00'),
             'total_discounts': Decimal('0.00'),
+            'discount_breakdown': {},
             'payment_breakdown': {},
             'daily_breakdown': {},
             'order_types': {},
+            'dining_options': {},
             'voided_orders': 0,
             'refunded_amount': Decimal('0.00')
         }
         
         # Analyze orders
         for order in orders:
+            # Skip None orders
+            if order is None:
+                continue
+            
             order_date = self._extract_date_from_order(order)
             order_type = order.get('source', 'Unknown')
             
@@ -232,11 +298,26 @@ class SalesSummaryAnalyzer:
                     'orders': 0,
                     'gross_sales': Decimal('0.00'),
                     'tips': Decimal('0.00'),
-                    'tax': Decimal('0.00')
+                    'tax': Decimal('0.00'),
+                    'discounts': Decimal('0.00')
                 }
             
             # Count order types
             summary['order_types'][order_type] = summary['order_types'].get(order_type, 0) + 1
+            
+            # Track dining options
+            dining_option = order.get('diningOption', {}) or {}
+            dining_option_guid = dining_option.get('guid', 'Unknown')
+            dining_option_name = self.dining_option_map.get(dining_option_guid, dining_option_guid)
+            
+            if dining_option_guid not in summary['dining_options']:
+                summary['dining_options'][dining_option_guid] = {
+                    'name': dining_option_name,
+                    'count': 0,
+                    'gross_sales': Decimal('0.00'),
+                    'tips': Decimal('0.00')
+                }
+            summary['dining_options'][dining_option_guid]['count'] += 1
             
             # Check if order is voided
             if order.get('voided', False):
@@ -244,8 +325,11 @@ class SalesSummaryAnalyzer:
                 continue
             
             # Process each check in the order
-            checks = order.get('checks', [])
+            checks = order.get('checks', []) or []
             for check in checks:
+                # Skip None checks
+                if check is None:
+                    continue
                 if check.get('voided', False):
                     continue
                 
@@ -256,10 +340,26 @@ class SalesSummaryAnalyzer:
                 # Initialize check totals
                 check_gross_sales = Decimal('0.00')
                 check_tips = Decimal('0.00')
+                check_discounts = Decimal('0.00')
+                
+                # Process check-level discounts
+                check_discounts += self._process_discounts(check.get('appliedDiscounts', []), summary['discount_breakdown'])
+                
+                # Process item-level discounts
+                for selection in check.get('selections', []):
+                    if not selection.get('voided', False):
+                        check_discounts += self._process_discounts(selection.get('appliedDiscounts', []), summary['discount_breakdown'])
+                        # Also process modifier discounts
+                        for modifier in selection.get('modifiers', []):
+                            if not modifier.get('voided', False):
+                                check_discounts += self._process_discounts(modifier.get('appliedDiscounts', []), summary['discount_breakdown'])
                 
                 # Process payments for this check
-                payments = check.get('payments', [])
+                payments = check.get('payments', []) or []
                 for payment in payments:
+                    # Skip None payments
+                    if payment is None:
+                        continue
                     # Check payment status and void conditions
                     payment_status = payment.get('paymentStatus', 'UNKNOWN')
                     is_voided = payment.get('voided', False)
@@ -275,20 +375,11 @@ class SalesSummaryAnalyzer:
                     payment_amount = Decimal(str(payment.get('amount', 0)))
                     tip_amount = Decimal(str(payment.get('tipAmount', 0)))
                     
-                    # Debug output for first few payments
-                    if summary['total_payments'] < 3:
-                        print(f"DEBUG - Payment {summary['total_payments'] + 1}:")
-                        print(f"  Payment amount: ${payment_amount}")
-                        print(f"  Tip amount: ${tip_amount}")
-                        print(f"  Payment type: {payment_type}")
-                        print(f"  Payment status: {payment_status}")
-                        print(f"  Voided flag: {is_voided}")
-                        print(f"  Including in summary: {not (is_voided and payment_status != 'OPEN')}")
                     
                     summary['total_payments'] += 1
                     
-                    # Gross sales = payment amount + tip amount
-                    check_gross_sales += payment_amount + tip_amount
+                    # Gross sales = payment amount only (tips are separate)
+                    check_gross_sales += payment_amount
                     check_tips += tip_amount
                     
                     # Payment method breakdown
@@ -306,6 +397,7 @@ class SalesSummaryAnalyzer:
                 # Add to totals
                 summary['gross_sales'] += check_gross_sales
                 summary['total_tips'] += check_tips
+                summary['total_discounts'] += check_discounts
                 
                 # Daily breakdown (only count if there were payments)
                 if check_gross_sales > 0:
@@ -313,8 +405,16 @@ class SalesSummaryAnalyzer:
                     summary['daily_breakdown'][order_date]['gross_sales'] += check_gross_sales
                     summary['daily_breakdown'][order_date]['tips'] += check_tips
                     summary['daily_breakdown'][order_date]['tax'] += tax_amount
+                    summary['daily_breakdown'][order_date]['discounts'] += check_discounts
+                    
+                    # Update dining option totals (only count if there were payments)
+                    dining_option = order.get('diningOption', {}) or {}
+                    dining_option_guid = dining_option.get('guid', 'Unknown')
+                    if dining_option_guid in summary['dining_options']:
+                        summary['dining_options'][dining_option_guid]['gross_sales'] += check_gross_sales
+                        summary['dining_options'][dining_option_guid]['tips'] += check_tips
         
-        # Calculate net sales
+        # Calculate net sales (gross sales - tax - discounts, tips excluded)
         summary['net_sales'] = summary['gross_sales'] - summary['total_tax'] - summary['total_discounts']
         
         return summary
@@ -330,6 +430,30 @@ class SalesSummaryAnalyzer:
             return 'Unknown'
         except:
             return 'Unknown'
+    
+    def _process_discounts(self, applied_discounts: List[Dict], discount_breakdown: Dict) -> Decimal:
+        """Process applied discounts and return total discount amount"""
+        total_discount = Decimal('0.00')
+        
+        for discount in applied_discounts:
+            if discount.get('voided', False):
+                continue
+                
+            discount_name = discount.get('name', 'Unknown Discount')
+            discount_amount = Decimal(str(discount.get('discountAmount', 0)))
+            
+            # Track discount by type/name
+            if discount_name not in discount_breakdown:
+                discount_breakdown[discount_name] = {
+                    'count': 0,
+                    'amount': Decimal('0.00')
+                }
+            
+            discount_breakdown[discount_name]['count'] += 1
+            discount_breakdown[discount_name]['amount'] += discount_amount
+            total_discount += discount_amount
+        
+        return total_discount
 
 
 def load_orders_from_json(filename: str) -> Optional[List[Dict]]:
@@ -366,203 +490,6 @@ def load_orders_from_json(filename: str) -> Optional[List[Dict]]:
         return None
 
 
-def get_data_source_choice() -> str:
-    """Ask user whether to use Toast API or load from JSON file"""
-    print("\n" + "="*50)
-    print("DATA SOURCE SELECTION")
-    print("="*50)
-    print("1. Fetch data from Toast API (live)")
-    print("2. Load data from saved JSON file (offline)")
-    print("-" * 50)
-    
-    while True:
-        choice = input("Enter your choice (1-2): ").strip()
-        if choice == '1':
-            return 'api'
-        elif choice == '2':
-            return 'json'
-        else:
-            print("Invalid choice. Please enter 1 or 2.")
-
-
-def get_date_input_method() -> str:
-    """Ask user whether to use single business date or business date range"""
-    print("\n" + "="*50)
-    print("DATE SELECTION METHOD")
-    print("="*50)
-    print("1. Single business date")
-    print("   - Analyze one complete business day")
-    print("   - Perfect for daily reporting")
-    print()
-    print("2. Business date range")
-    print("   - Analyze multiple business days")
-    print("   - Great for weekly/monthly reporting")
-    print("   - Uses business dates for each day")
-    print("-" * 50)
-    
-    while True:
-        choice = input("Enter your choice (1-2): ").strip()
-        if choice == '1':
-            return 'business'
-        elif choice == '2':
-            return 'range'
-        else:
-            print("Invalid choice. Please enter 1 or 2.")
-
-
-def get_business_date_input() -> str:
-    """Get single business date from user"""
-    print("\n" + "="*50)
-    print("BUSINESS DATE SELECTION")
-    print("="*50)
-    print("Enter the business date you want to analyze.")
-    print("Note: This represents one complete business day cycle")
-    print("(e.g., from opening to closing, even if it spans midnight)")
-    print()
-    
-    today = datetime.now().date()
-    yesterday = today - timedelta(days=1)
-    
-    print("Quick options:")
-    print(f"1. Today ({today})")
-    print(f"2. Yesterday ({yesterday})")
-    print("3. Enter custom date")
-    print("-" * 50)
-    
-    while True:
-        choice = input("Enter your choice (1-3): ").strip()
-        if choice == '1':
-            return str(today)
-        elif choice == '2':
-            return str(yesterday)
-        elif choice == '3':
-            while True:
-                date_str = input("Enter business date (YYYY-MM-DD): ").strip()
-                try:
-                    datetime.strptime(date_str, "%Y-%m-%d")
-                    return date_str
-                except ValueError:
-                    print("Invalid date format. Please use YYYY-MM-DD format.")
-        else:
-            print("Invalid choice. Please enter 1-3.")
-
-
-def get_json_file_input() -> str:
-    """Get JSON filename from user"""
-    print("\nAvailable JSON files in current directory:")
-    
-    json_files = [f for f in os.listdir('.') if f.endswith('.json')]
-    if json_files:
-        for i, filename in enumerate(json_files, 1):
-            print(f"  {i}. {filename}")
-        print()
-    else:
-        print("  No JSON files found in current directory")
-        print()
-    
-    while True:
-        filename = input("Enter JSON filename (or full path): ").strip()
-        filename = filename.strip('"\'')
-        
-        if os.path.exists(filename):
-            return filename
-        else:
-            print(f"File not found: {filename}")
-            retry = input("Try again? (y/n): ").strip().lower()
-            if retry != 'y':
-                return ""
-
-
-def get_date_range_input() -> Tuple[str, str]:
-    """Get business date range input from user"""
-    print("\n" + "="*50)
-    print("BUSINESS DATE RANGE SELECTION")
-    print("="*50)
-    print("Select the range of business dates to analyze.")
-    print("Each date represents a complete business day cycle.")
-    print()
-    
-    print("Choose an option:")
-    print("1. Custom date range")
-    print("2. Pre-set sales periods")
-    
-    while True:
-        choice = input("Enter your choice (1-2): ").strip()
-        if choice in ['1', '2']:
-            break
-        print("Invalid choice. Please enter 1 or 2.")
-    
-    if choice == '1':
-        # Custom date range
-        print("\nCustom Business Date Range:")
-        while True:
-            start_date = input("Enter start business date (YYYY-MM-DD): ").strip()
-            try:
-                datetime.strptime(start_date, "%Y-%m-%d")
-                break
-            except ValueError:
-                print("Invalid date format. Please use YYYY-MM-DD format.")
-        
-        while True:
-            end_date = input("Enter end business date (YYYY-MM-DD): ").strip()
-            try:
-                end_dt = datetime.strptime(end_date, "%Y-%m-%d")
-                start_dt = datetime.strptime(start_date, "%Y-%m-%d")
-                if end_dt < start_dt:
-                    print("End date must be after start date.")
-                    continue
-                return start_date, end_date
-            except ValueError:
-                print("Invalid date format. Please use YYYY-MM-DD format.")
-    
-    else:
-        # Pre-set sales periods
-        today = datetime.now().date()
-        
-        # Calculate Sunday-Saturday weeks
-        days_since_sunday = (today.weekday() + 1) % 7  # Monday=0, Sunday=6 -> Sunday=0
-        this_week_start = today - timedelta(days=days_since_sunday)  # This Sunday
-        this_week_end = today  # Today
-        
-        # Previous week (Sunday to Saturday)
-        prev_week_start = this_week_start - timedelta(days=7)  # Previous Sunday
-        prev_week_end = this_week_start - timedelta(days=1)    # Previous Saturday
-        
-        # Month calculations
-        month_start = today.replace(day=1)
-        if today.month == 1:
-            last_month_start = today.replace(year=today.year-1, month=12, day=1)
-            last_month_end = today.replace(day=1) - timedelta(days=1)
-        else:
-            last_month_start = today.replace(month=today.month-1, day=1)
-            # Get last day of previous month
-            next_month = today.replace(day=1)
-            last_month_end = next_month - timedelta(days=1)
-        
-        print("\nPre-set Sales Periods:")
-        print(f"1. This week - Sunday to today ({this_week_start} to {this_week_end})")
-        print(f"2. Previous week - Sunday to Saturday ({prev_week_start} to {prev_week_end})")
-        print(f"3. This month - 1st to today ({month_start} to {today})")
-        print(f"4. Last month - complete ({last_month_start} to {last_month_end})")
-        print(f"5. Last 7 days ({today - timedelta(days=6)} to {today})")
-        print(f"6. Last 30 days ({today - timedelta(days=29)} to {today})")
-        
-        while True:
-            quick_choice = input("Enter your choice (1-6): ").strip()
-            if quick_choice == '1':
-                return str(this_week_start), str(this_week_end)
-            elif quick_choice == '2':
-                return str(prev_week_start), str(prev_week_end)
-            elif quick_choice == '3':
-                return str(month_start), str(today)
-            elif quick_choice == '4':
-                return str(last_month_start), str(last_month_end)
-            elif quick_choice == '5':
-                return str(today - timedelta(days=6)), str(today)
-            elif quick_choice == '6':
-                return str(today - timedelta(days=29)), str(today)
-            else:
-                print("Invalid choice. Please enter 1-6.")
 
 
 def format_currency(amount: Decimal) -> str:
@@ -570,29 +497,32 @@ def format_currency(amount: Decimal) -> str:
     return f"${amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP):,.2f}"
 
 
-def display_sales_summary(summary: Dict, start_date: str, end_date: str) -> None:
+def display_sales_summary(summary: Dict, start_date: str, end_date: str, show_all: bool = False) -> None:
     """Display formatted sales summary"""
     print(f"\n{'='*80}")
     print(f"SALES SUMMARY: {start_date} to {end_date}")
     print(f"{'='*80}")
     
-    # Overall totals
-    print(f"\n📊 OVERALL TOTALS:")
-    print(f"   Total Orders: {summary['total_orders']:,}")
-    print(f"   Voided Orders: {summary['voided_orders']:,}")
-    print(f"   Gross Sales: {format_currency(summary['gross_sales'])}")
-    print(f"   Total Tax: {format_currency(summary['total_tax'])}")
-    print(f"   Total Tips: {format_currency(summary['total_tips'])}")
-    print(f"   Net Sales: {format_currency(summary['net_sales'])}")
+    # Overall totals (show in all mode)
+    if show_all:
+        print(f"\n📊 OVERALL TOTALS:")
+        print(f"   Total Orders: {summary['total_orders']:,}")
+        print(f"   Voided Orders: {summary['voided_orders']:,}")
+        print(f"   Gross Sales: {format_currency(summary['gross_sales'])}")
+        print(f"   Total Tax: {format_currency(summary['total_tax'])}")
+        print(f"   Total Discounts: {format_currency(summary['total_discounts'])}")
+        print(f"   Total Tips: {format_currency(summary['total_tips'])}")
+        print(f"   Net Sales: {format_currency(summary['net_sales'])}")
     
     # Daily breakdown
     if summary['daily_breakdown']:
         print(f"\n📅 DAILY BREAKDOWN:")
-        print(f"   {'Date':<12} {'Orders':<8} {'Gross Sales':<15} {'Tips':<12} {'Tax':<12}")
-        print(f"   {'-'*60}")
+        print(f"   {'Date':<12} {'Orders':<8} {'Gross Sales':<15} {'Discounts':<12} {'Tips':<12} {'Tax':<12}")
+        print(f"   {'-'*75}")
         
         total_daily_orders = 0
         total_daily_sales = Decimal('0.00')
+        total_daily_discounts = Decimal('0.00')
         total_daily_tips = Decimal('0.00')
         total_daily_tax = Decimal('0.00')
         
@@ -601,21 +531,23 @@ def display_sales_summary(summary: Dict, start_date: str, end_date: str) -> None
                 day_data = summary['daily_breakdown'][date]
                 orders = day_data['orders']
                 sales = day_data['gross_sales']
+                discounts = day_data['discounts']
                 tips = day_data['tips']
                 tax = day_data['tax']
                 
-                print(f"   {date:<12} {orders:<8} {format_currency(sales):<15} {format_currency(tips):<12} {format_currency(tax):<12}")
+                print(f"   {date:<12} {orders:<8} {format_currency(sales):<15} {format_currency(discounts):<12} {format_currency(tips):<12} {format_currency(tax):<12}")
                 
                 total_daily_orders += orders
                 total_daily_sales += sales
+                total_daily_discounts += discounts
                 total_daily_tips += tips
                 total_daily_tax += tax
         
-        print(f"   {'-'*60}")
-        print(f"   {'TOTAL':<12} {total_daily_orders:<8} {format_currency(total_daily_sales):<15} {format_currency(total_daily_tips):<12} {format_currency(total_daily_tax):<12}")
+        print(f"   {'-'*75}")
+        print(f"   {'TOTAL':<12} {total_daily_orders:<8} {format_currency(total_daily_sales):<15} {format_currency(total_daily_discounts):<12} {format_currency(total_daily_tips):<12} {format_currency(total_daily_tax):<12}")
     
-    # Payment method breakdown
-    if summary['payment_breakdown']:
+    # Payment method breakdown (show in all mode)
+    if show_all and summary['payment_breakdown']:
         print(f"\n💳 PAYMENT METHOD BREAKDOWN:")
         print(f"   {'Method':<15} {'Count':<8} {'Amount':<15} {'Tips':<12}")
         print(f"   {'-'*50}")
@@ -626,9 +558,36 @@ def display_sales_summary(summary: Dict, start_date: str, end_date: str) -> None
             tips = data['tips']
             print(f"   {method:<15} {count:<8} {format_currency(amount):<15} {format_currency(tips):<12}")
     
-    # Order type breakdown
-    if summary['order_types']:
-        print(f"\n🍽️  ORDER TYPE BREAKDOWN:")
+    # Discount breakdown (show in all mode)
+    if show_all and summary['discount_breakdown']:
+        print(f"\n💰 DISCOUNT BREAKDOWN:")
+        print(f"   {'Discount Type':<25} {'Count':<8} {'Amount':<15}")
+        print(f"   {'-'*48}")
+        
+        for discount_type, data in summary['discount_breakdown'].items():
+            count = data['count']
+            amount = data['amount']
+            print(f"   {discount_type:<25} {count:<8} {format_currency(amount):<15}")
+    
+    # Dining option breakdown (show in all mode)
+    if show_all and summary['dining_options']:
+        print(f"\n🍽️  DINING OPTION BREAKDOWN:")
+        print(f"   {'Dining Option':<25} {'Count':<8} {'Gross Sales':<15} {'Tips':<12}")
+        print(f"   {'-'*60}")
+        
+        for dining_option_guid, data in summary['dining_options'].items():
+            count = data['count']
+            sales = data['gross_sales']
+            tips = data['tips']
+            # Use human-readable name if available, otherwise show shortened GUID
+            display_name = data.get('name', dining_option_guid)
+            if display_name == dining_option_guid and len(dining_option_guid) > 25:
+                display_name = dining_option_guid[:22] + "..."
+            print(f"   {display_name:<25} {count:<8} {format_currency(sales):<15} {format_currency(tips):<12}")
+    
+    # Order type breakdown (show in all mode)
+    if show_all and summary['order_types']:
+        print(f"\n📋 ORDER TYPE BREAKDOWN:")
         for order_type, count in summary['order_types'].items():
             percentage = (count / summary['total_orders'] * 100) if summary['total_orders'] > 0 else 0
             print(f"   {order_type}: {count:,} orders ({percentage:.1f}%)")
@@ -666,9 +625,16 @@ def parse_arguments():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog='''
 Examples:
-  python sales.py                    # Normal mode (no debug files)
-  python sales.py -d                 # Debug mode (saves raw API responses)
-  python sales.py --debug            # Debug mode (long form)
+  python sales.py --today            # Today's sales (display only)
+  python sales.py --yesterday --all  # Yesterday's complete report
+  python sales.py --this-week        # Current week (Sunday to today)
+  python sales.py --last-week        # Complete previous week (Sun-Sat)
+  python sales.py --this-month       # Current month (1st to today)
+  python sales.py --last-month       # Complete previous month
+  python sales.py --this-year        # Current year (Jan 1st to today)
+  python sales.py --last-year        # Complete previous year
+  python sales.py --range 2025-08-01 2025-08-15  # Custom date range
+  python sales.py --today --file my_report.json  # Save to JSON file
         '''
     )
     
@@ -678,153 +644,275 @@ Examples:
         help='Enable debug mode to save raw API responses to JSON files'
     )
     
+    parser.add_argument(
+        '--all',
+        action='store_true',
+        help='Show complete detailed report (default: only daily breakdown)'
+    )
+    
+    parser.add_argument(
+        '--file',
+        type=str,
+        help='Save results to JSON file with specified filename'
+    )
+    
+    parser.add_argument(
+        '--today',
+        action='store_true',
+        help='Analyze today\'s sales'
+    )
+    
+    parser.add_argument(
+        '--yesterday',
+        action='store_true',
+        help='Analyze yesterday\'s sales'
+    )
+    
+    parser.add_argument(
+        '--range',
+        nargs=2,
+        metavar=('START', 'END'),
+        help='Date range in YYYY-MM-DD format (e.g., --range 2025-08-01 2025-08-15)'
+    )
+    
+    parser.add_argument(
+        '--this-month',
+        action='store_true',
+        help='Analyze current month (1st to today)'
+    )
+    
+    parser.add_argument(
+        '--last-month',
+        action='store_true',
+        help='Analyze complete previous month'
+    )
+    
+    parser.add_argument(
+        '--this-year',
+        action='store_true',
+        help='Analyze current year (Jan 1st to today)'
+    )
+    
+    parser.add_argument(
+        '--last-year',
+        action='store_true',
+        help='Analyze complete previous year'
+    )
+    
+    parser.add_argument(
+        '--this-week',
+        action='store_true',
+        help='Analyze current week (Sunday to today)'
+    )
+    
+    parser.add_argument(
+        '--last-week',
+        action='store_true',
+        help='Analyze complete previous week (Sunday to Saturday)'
+    )
+    
     return parser.parse_args()
 
 
+def validate_and_get_date_range(args) -> Tuple[str, str]:
+    """Validate arguments and return start_date, end_date tuple"""
+    today = datetime.now().date()
+    
+    # Count how many date options are specified
+    date_options = sum([
+        args.today, 
+        args.yesterday, 
+        bool(args.range),
+        args.this_month,
+        args.last_month,
+        args.this_year,
+        args.last_year,
+        args.this_week,
+        args.last_week
+    ])
+    
+    if date_options == 0:
+        # Default to today if no date option specified
+        return str(today), str(today)
+    elif date_options > 1:
+        raise ValueError("Please specify only one date option")
+    
+    if args.today:
+        return str(today), str(today)
+    elif args.yesterday:
+        yesterday = today - timedelta(days=1)
+        return str(yesterday), str(yesterday)
+    elif args.range:
+        start_date, end_date = args.range
+        # Validate date format
+        try:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError("Invalid date format. Use YYYY-MM-DD format")
+        
+        if end_dt < start_dt:
+            raise ValueError("End date must be after or equal to start date")
+        
+        return start_date, end_date
+    elif args.this_month:
+        # Current month from 1st to today
+        month_start = today.replace(day=1)
+        return str(month_start), str(today)
+    elif args.last_month:
+        # Complete previous month
+        if today.month == 1:
+            last_month_start = today.replace(year=today.year-1, month=12, day=1)
+            last_month_end = today.replace(day=1) - timedelta(days=1)
+        else:
+            last_month_start = today.replace(month=today.month-1, day=1)
+            # Get last day of previous month
+            next_month = today.replace(day=1)
+            last_month_end = next_month - timedelta(days=1)
+        return str(last_month_start), str(last_month_end)
+    elif args.this_year:
+        # Current year from Jan 1st to today
+        year_start = today.replace(month=1, day=1)
+        return str(year_start), str(today)
+    elif args.last_year:
+        # Complete previous year
+        last_year_start = today.replace(year=today.year-1, month=1, day=1)
+        last_year_end = today.replace(year=today.year-1, month=12, day=31)
+        return str(last_year_start), str(last_year_end)
+    elif args.this_week:
+        # Current week from Sunday to today
+        # Monday=0, Sunday=6 in weekday(), but we want Sunday=0
+        days_since_sunday = (today.weekday() + 1) % 7
+        this_week_start = today - timedelta(days=days_since_sunday)
+        return str(this_week_start), str(today)
+    elif args.last_week:
+        # Complete previous week (Sunday to Saturday)
+        # Calculate this week's Sunday first
+        days_since_sunday = (today.weekday() + 1) % 7
+        this_week_start = today - timedelta(days=days_since_sunday)
+        # Previous week is 7 days before this week
+        last_week_start = this_week_start - timedelta(days=7)
+        last_week_end = this_week_start - timedelta(days=1)  # Saturday
+        return str(last_week_start), str(last_week_end)
+    
+    # This should never be reached
+    return str(today), str(today)
+
+
+def generate_filename(start_date: str, end_date: str, custom_filename: str = None) -> str:
+    """Generate output filename based on date range"""
+    if custom_filename:
+        if not custom_filename.endswith('.json'):
+            custom_filename += '.json'
+        return custom_filename
+    
+    if start_date == end_date:
+        return f"sales_summary_business_date_{start_date}.json"
+    else:
+        return f"sales_summary_{start_date}_to_{end_date}.json"
+
+
+
 def main():
-    """Main function with interactive interface"""
+    """Main function with command-line interface"""
     # Parse command line arguments
     args = parse_arguments()
     
-    print("="*60)
-    print("TOAST SALES SUMMARY SCRIPT v2.7.0")
-    if args.debug:
-        print("DEBUG MODE: Raw API responses will be saved to JSON files")
-    print("="*60)
-    
-    # Choose data source
-    data_source = get_data_source_choice()
-    
-    if data_source == 'api':
-        # Load configuration
-        config = load_config()
-        if not config:
-            return
+    try:
+        # Validate arguments and get date range
+        start_date, end_date = validate_and_get_date_range(args)
         
-        # Initialize client
-        client = ToastSalesAPIClient(
-            hostname=config['hostname'],
-            client_id=config['client_id'],
-            client_secret=config['client_secret'],
-            restaurant_guid=config['restaurant_guid'],
+        print("="*60)
+        print("TOAST SALES SUMMARY SCRIPT v2.8.0")
+        print("="*60)
+        if args.debug:
+            print("Debug mode: Saving raw API responses")
+        if args.all:
+            print("Report mode: Complete detailed report")
+        else:
+            print("Report mode: Daily breakdown only (use --all for full details)")
+        print(f"Date range: {start_date} to {end_date}")
+        print("="*60)
+        
+        # Load configuration and initialize API client
+        if args.debug:
+            print("Loading configuration...")
+        api_config = load_config()
+        if not api_config:
+            print("Error: Missing configuration. Please check your .env file.")
+            return 1
+        
+        api_client = ToastSalesAPIClient(
+            hostname=api_config['hostname'],
+            client_id=api_config['client_id'],
+            client_secret=api_config['client_secret'],
+            restaurant_guid=api_config['restaurant_guid'],
             debug_mode=args.debug
         )
         
-        print(f"Connecting to Toast API server: https://{client.hostname}")
+        if args.debug:
+            print(f"Connecting to Toast API server: https://{api_client.hostname}")
+            print("Testing authentication...")
+        if not api_client.authenticate():
+            print("Error: Authentication failed. Please check your credentials and hostname.")
+            return 1
         
-        # Test authentication
-        print("Testing authentication...")
-        if not client.authenticate():
-            print("Authentication failed. Please check your credentials and hostname.")
-            return
-    
-    analyzer = SalesSummaryAnalyzer()
-    
-    while True:
-        try:
-            if data_source == 'api':
-                # Choose date method
-                date_method = get_date_input_method()
-                
-                if date_method == 'business':
-                    # Get single business date
-                    business_date = get_business_date_input()
-                    
-                    print(f"\nFetching sales data for business date: {business_date}")
-                    
-                    # Fetch orders for business date
-                    orders = client.get_orders_by_business_date(business_date)
-                    
-                    start_date = business_date
-                    end_date = business_date
-                    date_range_str = f"business_date_{business_date}"
-                    
-                else:  # date_method == 'range'
-                    # Get date range
-                    start_date, end_date = get_date_range_input()
-                    
-                    print(f"\nFetching sales data from {start_date} to {end_date}...")
-                    
-                    # Fetch orders for date range
-                    orders = client.get_orders_by_date_range(start_date, end_date)
-                    
-                    date_range_str = f"{start_date}_to_{end_date}"
-                
-                if orders is None:
-                    print("Failed to retrieve sales data.")
-                    continue
-                    
-            else:  # data_source == 'json'
-                # Get JSON file from user
-                json_filename = get_json_file_input()
-                if not json_filename:
-                    print("No file selected. Exiting.")
-                    return
-                
-                print(f"\nLoading sales data from {json_filename}...")
-                orders = load_orders_from_json(json_filename)
-                
-                if orders is None:
-                    print("Failed to load sales data from file.")
-                    continue
-                
-                # Extract date range from filename
-                base_filename = os.path.basename(json_filename).replace('.json', '')
-                date_range_str = base_filename
-                start_date = "unknown"
-                end_date = "unknown"
-            
-            # Generate summary
+        # Fetch dining option names for human-readable display
+        dining_option_map = api_client.get_dining_options()
+        if not dining_option_map:
+            if args.debug:
+                print("Warning: Could not retrieve dining option names. Will show GUIDs instead.")
+            dining_option_map = {}
+        
+        # Fetch sales data
+        if args.debug:
+            print(f"Fetching sales data from {start_date} to {end_date}...")
+        if start_date == end_date:
+            orders = api_client.get_orders_by_business_date(start_date)
+        else:
+            orders = api_client.get_orders_by_date_range(start_date, end_date)
+        
+        if orders is None:
+            print("Error: Failed to retrieve sales data.")
+            return 1
+        
+        # Analyze and display results
+        if args.debug:
             print("Analyzing sales data...")
-            summary = analyzer.analyze_sales_summary(orders)
+        analyzer = SalesSummaryAnalyzer(dining_option_map)
+        summary = analyzer.analyze_sales_summary(orders)
+        display_sales_summary(summary, start_date, end_date, args.all)
+        
+        # Save results only if --file is specified
+        if args.file:
+            filename = generate_filename(start_date, end_date, args.file)
+            summary_data = {
+                'date_range': {'start': start_date, 'end': end_date},
+                'summary': json.loads(json.dumps(summary, default=lambda x: float(x) if isinstance(x, Decimal) else str(x))),
+                'raw_orders_count': len(orders),
+                'data_source': 'toast_api'
+            }
             
-            # Display results
-            display_sales_summary(summary, start_date, end_date)
-            
-            # Ask if user wants to save results
-            save_choice = input("\nWould you like to save this summary to a file? (y/n): ").strip().lower()
-            if save_choice == 'y':
-                if data_source == 'api':
-                    filename = f"sales_summary_{date_range_str}.json"
-                    summary_data = {
-                        'date_range': {'start': start_date, 'end': end_date},
-                        'summary': json.loads(json.dumps(summary, default=lambda x: float(x) if isinstance(x, Decimal) else str(x))),
-                        'raw_orders_count': len(orders),
-                        'data_source': 'toast_api'
-                    }
-                else:
-                    filename = f"sales_summary_{date_range_str}_from_json.json"
-                    summary_data = {
-                        'source_file': json_filename,
-                        'summary': json.loads(json.dumps(summary, default=lambda x: float(x) if isinstance(x, Decimal) else str(x))),
-                        'raw_orders_count': len(orders),
-                        'data_source': 'json_file'
-                    }
-                
-                try:
-                    with open(filename, 'w') as f:
-                        json.dump(summary_data, f, indent=2)
-                    print(f"Sales summary saved to {filename}")
-                except Exception as e:
-                    print(f"Error saving file: {e}")
-            
-            # Ask if user wants to continue
-            if data_source == 'api':
-                continue_choice = input("\nWould you like to generate another summary? (y/n): ").strip().lower()
-            else:
-                continue_choice = input("\nWould you like to analyze another file? (y/n): ").strip().lower()
-                
-            if continue_choice != 'y':
-                print("Goodbye!")
-                break
-                
-        except KeyboardInterrupt:
-            print("\n\nGoodbye!")
-            break
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            continue
+            try:
+                with open(filename, 'w') as f:
+                    json.dump(summary_data, f, indent=2)
+                print(f"\nSales summary saved to {filename}")
+            except Exception as e:
+                print(f"Error saving file: {e}")
+                return 1
+        
+        return 0
+        
+    except ValueError as e:
+        print(f"Error: {e}")
+        return 1
+    except KeyboardInterrupt:
+        print("\n\nOperation cancelled by user.")
+        return 1
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
