@@ -1,3 +1,4 @@
+#!/bin/python3
 import requests
 import json
 from datetime import datetime, timedelta

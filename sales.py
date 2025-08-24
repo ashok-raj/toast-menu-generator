@@ -593,6 +593,78 @@ def display_sales_summary(summary: Dict, start_date: str, end_date: str, show_al
             print(f"   {order_type}: {count:,} orders ({percentage:.1f}%)")
 
 
+def display_sales_summary_with_comparison(summary: Dict, start_date: str, end_date: str, 
+                                        compare_summary: Dict, compare_start_date: str, compare_end_date: str, 
+                                        show_all: bool = False) -> None:
+    """Display formatted sales summary with comparison data"""
+    print(f"\n{'='*80}")
+    print(f"SALES COMPARISON: {start_date} to {end_date} vs {compare_start_date} to {compare_end_date}")
+    print(f"{'='*80}")
+    
+    # Helper function to calculate percentage change
+    def percentage_change(current: Decimal, previous: Decimal) -> str:
+        if previous == 0:
+            return "N/A" if current == 0 else "+∞%"
+        change = ((current - previous) / previous) * 100
+        sign = "+" if change >= 0 else ""
+        return f"{sign}{change:.1f}%"
+    
+    # Helper function to format change with color indicators
+    def format_change(current: Decimal, previous: Decimal) -> str:
+        change = current - previous
+        pct_change = percentage_change(current, previous)
+        sign = "+" if change >= 0 else ""
+        return f"{sign}{format_currency(change)} ({pct_change})"
+    
+    # Key metrics comparison
+    print(f"\n📊 KEY METRICS COMPARISON:")
+    print(f"   {'Metric':<20} {'Current':<15} {'Previous':<15} {'Change':<20}")
+    print(f"   {'-'*70}")
+    
+    current_gross = summary['gross_sales']
+    previous_gross = compare_summary['gross_sales']
+    current_tips = summary['total_tips'] 
+    previous_tips = compare_summary['total_tips']
+    current_orders = summary['total_orders']
+    previous_orders = compare_summary['total_orders']
+    
+    print(f"   {'Gross Sales':<20} {format_currency(current_gross):<15} {format_currency(previous_gross):<15} {format_change(current_gross, previous_gross):<20}")
+    print(f"   {'Total Tips':<20} {format_currency(current_tips):<15} {format_currency(previous_tips):<15} {format_change(current_tips, previous_tips):<20}")
+    print(f"   {'Total Orders':<20} {current_orders:<15} {previous_orders:<15} {current_orders - previous_orders:+d} ({percentage_change(Decimal(current_orders), Decimal(previous_orders))})    ")
+    
+    if current_orders > 0 and previous_orders > 0:
+        current_avg = current_gross / current_orders
+        previous_avg = previous_gross / previous_orders
+        print(f"   {'Avg Order Value':<20} {format_currency(current_avg):<15} {format_currency(previous_avg):<15} {format_change(current_avg, previous_avg):<20}")
+    
+    # Daily breakdown comparison (if both are single days)
+    if start_date == end_date and compare_start_date == compare_end_date:
+        print(f"\n📅 DAILY BREAKDOWN COMPARISON:")
+        print(f"   Current ({start_date}): {current_orders} orders, {format_currency(current_gross)} gross, {format_currency(current_tips)} tips")
+        print(f"   Previous ({compare_start_date}): {previous_orders} orders, {format_currency(previous_gross)} gross, {format_currency(previous_tips)} tips")
+    
+    # Show detailed breakdowns if requested
+    if show_all:
+        print(f"\n💳 PAYMENT METHOD COMPARISON:")
+        if summary['payment_breakdown'] and compare_summary['payment_breakdown']:
+            all_methods = set(summary['payment_breakdown'].keys()) | set(compare_summary['payment_breakdown'].keys())
+            print(f"   {'Method':<15} {'Current Count':<12} {'Previous Count':<12} {'Current Amount':<15} {'Previous Amount':<15}")
+            print(f"   {'-'*80}")
+            
+            for method in sorted(all_methods):
+                curr_data = summary['payment_breakdown'].get(method, {'count': 0, 'amount': Decimal('0.00')})
+                prev_data = compare_summary['payment_breakdown'].get(method, {'count': 0, 'amount': Decimal('0.00')})
+                
+                print(f"   {method:<15} {curr_data['count']:<12} {prev_data['count']:<12} {format_currency(curr_data['amount']):<15} {format_currency(prev_data['amount']):<15}")
+        
+        # Show individual summaries
+        print(f"\n{'='*40} CURRENT PERIOD DETAILS {'='*40}")
+        display_sales_summary(summary, start_date, end_date, show_all=True)
+        
+        print(f"\n{'='*40} COMPARISON PERIOD DETAILS {'='*40}")
+        display_sales_summary(compare_summary, compare_start_date, compare_end_date, show_all=True)
+
+
 def load_config() -> Dict[str, str]:
     """Load configuration from .env file"""
     load_dotenv()
@@ -627,6 +699,10 @@ def parse_arguments():
 Examples:
   python sales.py --today            # Today's sales (display only)
   python sales.py --yesterday --all  # Yesterday's complete report
+  python sales.py --date 2025-08-15  # Specific date sales
+  python sales.py --today --compare  # Today vs same day last week
+  python sales.py --yesterday --compare --all  # Yesterday vs same day last week (detailed)
+  python sales.py --date 2025-08-15 --compare  # Aug 15th vs Aug 8th comparison
   python sales.py --this-week        # Current week (Sunday to today)
   python sales.py --last-week        # Complete previous week (Sun-Sat)
   python sales.py --this-month       # Current month (1st to today)
@@ -651,6 +727,12 @@ Examples:
     )
     
     parser.add_argument(
+        '--compare',
+        action='store_true',
+        help='Compare with same day of week from previous week (use with --today, --yesterday, or --date)'
+    )
+    
+    parser.add_argument(
         '--file',
         type=str,
         help='Save results to JSON file with specified filename'
@@ -666,6 +748,13 @@ Examples:
         '--yesterday',
         action='store_true',
         help='Analyze yesterday\'s sales'
+    )
+    
+    parser.add_argument(
+        '--date',
+        type=str,
+        metavar='DATE',
+        help='Specific date in YYYY-MM-DD format (e.g., --date 2025-08-15)'
     )
     
     parser.add_argument(
@@ -714,14 +803,22 @@ Examples:
     return parser.parse_args()
 
 
-def validate_and_get_date_range(args) -> Tuple[str, str]:
-    """Validate arguments and return start_date, end_date tuple"""
+def _get_comparison_date(date_str: str) -> str:
+    """Get the same day of week from the previous week"""
+    date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+    comparison_date = date_obj - timedelta(days=7)
+    return str(comparison_date)
+
+
+def validate_and_get_date_range(args) -> Tuple[str, str, str, str]:
+    """Validate arguments and return start_date, end_date, compare_start_date, compare_end_date tuple"""
     today = datetime.now().date()
     
     # Count how many date options are specified
     date_options = sum([
         args.today, 
         args.yesterday, 
+        bool(args.date),
         bool(args.range),
         args.this_month,
         args.last_month,
@@ -731,17 +828,47 @@ def validate_and_get_date_range(args) -> Tuple[str, str]:
         args.last_week
     ])
     
+    # Validate compare option usage
+    if args.compare:
+        valid_compare_options = args.today or args.yesterday or args.date
+        if not valid_compare_options:
+            raise ValueError("--compare can only be used with --today, --yesterday, or --date options")
+        if args.range or args.this_week or args.last_week or args.this_month or args.last_month or args.this_year or args.last_year:
+            raise ValueError("--compare cannot be used with date range options")
+
     if date_options == 0:
         # Default to today if no date option specified
-        return str(today), str(today)
+        return str(today), str(today), None, None
     elif date_options > 1:
         raise ValueError("Please specify only one date option")
     
     if args.today:
-        return str(today), str(today)
+        start_date = str(today)
+        end_date = str(today)
+        if args.compare:
+            compare_date = _get_comparison_date(start_date)
+            return start_date, end_date, compare_date, compare_date
+        return start_date, end_date, None, None
     elif args.yesterday:
         yesterday = today - timedelta(days=1)
-        return str(yesterday), str(yesterday)
+        start_date = str(yesterday)
+        end_date = str(yesterday)
+        if args.compare:
+            compare_date = _get_comparison_date(start_date)
+            return start_date, end_date, compare_date, compare_date
+        return start_date, end_date, None, None
+    elif args.date:
+        # Validate date format
+        try:
+            date_dt = datetime.strptime(args.date, "%Y-%m-%d").date()
+        except ValueError:
+            raise ValueError(f"Invalid date format: {args.date}. Use YYYY-MM-DD format")
+        start_date = str(date_dt)
+        end_date = str(date_dt)
+        if args.compare:
+            compare_date = _get_comparison_date(start_date)
+            return start_date, end_date, compare_date, compare_date
+        return start_date, end_date, None, None
     elif args.range:
         start_date, end_date = args.range
         # Validate date format
@@ -754,11 +881,11 @@ def validate_and_get_date_range(args) -> Tuple[str, str]:
         if end_dt < start_dt:
             raise ValueError("End date must be after or equal to start date")
         
-        return start_date, end_date
+        return start_date, end_date, None, None
     elif args.this_month:
         # Current month from 1st to today
         month_start = today.replace(day=1)
-        return str(month_start), str(today)
+        return str(month_start), str(today), None, None
     elif args.last_month:
         # Complete previous month
         if today.month == 1:
@@ -769,22 +896,22 @@ def validate_and_get_date_range(args) -> Tuple[str, str]:
             # Get last day of previous month
             next_month = today.replace(day=1)
             last_month_end = next_month - timedelta(days=1)
-        return str(last_month_start), str(last_month_end)
+        return str(last_month_start), str(last_month_end), None, None
     elif args.this_year:
         # Current year from Jan 1st to today
         year_start = today.replace(month=1, day=1)
-        return str(year_start), str(today)
+        return str(year_start), str(today), None, None
     elif args.last_year:
         # Complete previous year
         last_year_start = today.replace(year=today.year-1, month=1, day=1)
         last_year_end = today.replace(year=today.year-1, month=12, day=31)
-        return str(last_year_start), str(last_year_end)
+        return str(last_year_start), str(last_year_end), None, None
     elif args.this_week:
         # Current week from Sunday to today
         # Monday=0, Sunday=6 in weekday(), but we want Sunday=0
         days_since_sunday = (today.weekday() + 1) % 7
         this_week_start = today - timedelta(days=days_since_sunday)
-        return str(this_week_start), str(today)
+        return str(this_week_start), str(today), None, None
     elif args.last_week:
         # Complete previous week (Sunday to Saturday)
         # Calculate this week's Sunday first
@@ -793,10 +920,10 @@ def validate_and_get_date_range(args) -> Tuple[str, str]:
         # Previous week is 7 days before this week
         last_week_start = this_week_start - timedelta(days=7)
         last_week_end = this_week_start - timedelta(days=1)  # Saturday
-        return str(last_week_start), str(last_week_end)
+        return str(last_week_start), str(last_week_end), None, None
     
     # This should never be reached
-    return str(today), str(today)
+    return str(today), str(today), None, None
 
 
 def generate_filename(start_date: str, end_date: str, custom_filename: str = None) -> str:
@@ -820,7 +947,7 @@ def main():
     
     try:
         # Validate arguments and get date range
-        start_date, end_date = validate_and_get_date_range(args)
+        start_date, end_date, compare_start_date, compare_end_date = validate_and_get_date_range(args)
         
         print("="*60)
         print("TOAST SALES SUMMARY SCRIPT v2.8.0")
@@ -876,12 +1003,36 @@ def main():
             print("Error: Failed to retrieve sales data.")
             return 1
         
+        # Fetch comparison data if requested
+        compare_orders = None
+        compare_summary = None
+        if compare_start_date and compare_end_date:
+            if args.debug:
+                print(f"Fetching comparison data from {compare_start_date} to {compare_end_date}...")
+            if compare_start_date == compare_end_date:
+                compare_orders = api_client.get_orders_by_business_date(compare_start_date)
+            else:
+                compare_orders = api_client.get_orders_by_date_range(compare_start_date, compare_end_date)
+            
+            if compare_orders is None:
+                print("Warning: Failed to retrieve comparison data. Showing main data only.")
+            else:
+                if args.debug:
+                    print("Analyzing comparison data...")
+                compare_analyzer = SalesSummaryAnalyzer(dining_option_map)
+                compare_summary = compare_analyzer.analyze_sales_summary(compare_orders)
+        
         # Analyze and display results
         if args.debug:
             print("Analyzing sales data...")
         analyzer = SalesSummaryAnalyzer(dining_option_map)
         summary = analyzer.analyze_sales_summary(orders)
-        display_sales_summary(summary, start_date, end_date, args.all)
+        
+        # Display results with comparison if available
+        if compare_summary:
+            display_sales_summary_with_comparison(summary, start_date, end_date, compare_summary, compare_start_date, compare_end_date, args.all)
+        else:
+            display_sales_summary(summary, start_date, end_date, args.all)
         
         # Save results only if --file is specified
         if args.file:
