@@ -520,6 +520,9 @@ def display_sales_summary(summary: Dict, start_date: str, end_date: str, show_al
         print(f"   {'Date':<12} {'Orders':<8} {'Gross Sales':<15} {'Discounts':<12} {'Tips':<12} {'Tax':<12}")
         print(f"   {'-'*75}")
         
+        # Check if this is a single day report
+        is_single_day = start_date == end_date
+        
         total_daily_orders = 0
         total_daily_sales = Decimal('0.00')
         total_daily_discounts = Decimal('0.00')
@@ -535,7 +538,9 @@ def display_sales_summary(summary: Dict, start_date: str, end_date: str, show_al
                 tips = day_data['tips']
                 tax = day_data['tax']
                 
-                print(f"   {date:<12} {orders:<8} {format_currency(sales):<15} {format_currency(discounts):<12} {format_currency(tips):<12} {format_currency(tax):<12}")
+                # For single day, skip individual rows and just accumulate totals
+                if not is_single_day:
+                    print(f"   {date:<12} {orders:<8} {format_currency(sales):<15} {format_currency(discounts):<12} {format_currency(tips):<12} {format_currency(tax):<12}")
                 
                 total_daily_orders += orders
                 total_daily_sales += sales
@@ -543,8 +548,14 @@ def display_sales_summary(summary: Dict, start_date: str, end_date: str, show_al
                 total_daily_tips += tips
                 total_daily_tax += tax
         
+        # For single day, show the actual date instead of TOTAL
+        if is_single_day:
+            print(f"   {start_date:<12} {total_daily_orders:<8} {format_currency(total_daily_sales):<15} {format_currency(total_daily_discounts):<12} {format_currency(total_daily_tips):<12} {format_currency(total_daily_tax):<12}")
+        else:
+            print(f"   {'-'*75}")
+            print(f"   {'TOTAL':<12} {total_daily_orders:<8} {format_currency(total_daily_sales):<15} {format_currency(total_daily_discounts):<12} {format_currency(total_daily_tips):<12} {format_currency(total_daily_tax):<12}")
+        
         print(f"   {'-'*75}")
-        print(f"   {'TOTAL':<12} {total_daily_orders:<8} {format_currency(total_daily_sales):<15} {format_currency(total_daily_discounts):<12} {format_currency(total_daily_tips):<12} {format_currency(total_daily_tax):<12}")
     
     # Payment method breakdown (show in all mode)
     if show_all and summary['payment_breakdown']:
@@ -949,17 +960,8 @@ def main():
         # Validate arguments and get date range
         start_date, end_date, compare_start_date, compare_end_date = validate_and_get_date_range(args)
         
-        print("="*60)
-        print("TOAST SALES SUMMARY SCRIPT v2.8.0")
-        print("="*60)
         if args.debug:
             print("Debug mode: Saving raw API responses")
-        if args.all:
-            print("Report mode: Complete detailed report")
-        else:
-            print("Report mode: Daily breakdown only (use --all for full details)")
-        print(f"Date range: {start_date} to {end_date}")
-        print("="*60)
         
         # Load configuration and initialize API client
         if args.debug:
