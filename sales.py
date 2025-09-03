@@ -211,6 +211,71 @@ class ToastSalesAPIClient:
             print(f"Retrieved {len(all_orders)} total orders across business date range")
         return all_orders
     
+    def get_analytics_data(self, business_date: str) -> Optional[Dict]:
+        """Retrieve analytics data for a specific business date using the analytics endpoint"""
+        if not self._ensure_authenticated():
+            print("Failed to authenticate")
+            return None
+        
+        try:
+            formatted_business_date = self._format_business_date(business_date)
+        except ValueError as e:
+            if self.debug_mode:
+                print(f"Date formatting error: {e}")
+            return None
+        
+        if self.debug_mode:
+            print(f"Using analytics endpoint for business date: {formatted_business_date} (from {business_date})")
+        
+        # Use the analytics endpoint - timeRange parameter needs clarification
+        url = f"{self.api_base_url}/era/v1/metrics/{formatted_business_date}"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Toast-Restaurant-External-ID": self.restaurant_guid,
+            "Content-Type": "application/json"
+        }
+        
+        # TODO: Need to know what should go in the POST body
+        payload = {
+            # Add required payload parameters here
+        }
+        
+        try:
+            if self.debug_mode:
+                print(f"Fetching analytics data from: {url}")
+            response = requests.post(url, headers=headers, json=payload)
+            
+            if response.status_code != 200:
+                if self.debug_mode:
+                    print(f"Analytics API Error - Status: {response.status_code}")
+                    print(f"Response content: {response.text}")
+            
+            response.raise_for_status()
+            data = response.json()
+            
+            # Save debug file only if debug mode is enabled
+            if self.debug_mode:
+                debug_filename = f"debug_analytics_business_date_{formatted_business_date}.json"
+                try:
+                    with open(debug_filename, 'w') as f:
+                        json.dump({
+                            'business_date': {
+                                'input_date': business_date,
+                                'formatted_business_date': formatted_business_date
+                            },
+                            'analytics_data': data
+                        }, f, indent=2)
+                    print(f"Debug: Saved analytics data to {debug_filename}")
+                except Exception as e:
+                    print(f"Warning: Could not save debug file: {e}")
+            
+            return data
+            
+        except requests.exceptions.RequestException as e:
+            if self.debug_mode:
+                print(f"Error retrieving analytics data: {e}")
+            return None
+
     def get_dining_options(self) -> Optional[Dict[str, str]]:
         """Retrieve dining options and create GUID-to-name mapping"""
         if not self._ensure_authenticated():
