@@ -13,11 +13,14 @@ class MenuItem:
     price: Optional[float] = None
     calories: Optional[int] = None
     is_available: bool = True
+    images: List[str] = None
     modifiers: List[str] = None
     tags: List[str] = None
     raw_data: Dict[str, Any] = None
-    
+
     def __post_init__(self):
+        if self.images is None:
+            self.images = []
         if self.modifiers is None:
             self.modifiers = []
         if self.tags is None:
@@ -42,6 +45,7 @@ class MenuItem:
             price=data.get("price"),
             calories=data.get("calories"),
             is_available=data.get("isAvailable", True),
+            images=data.get("images", []),
             modifiers=data.get("modifiers", []),
             tags=data.get("tags", []),
             raw_data=data

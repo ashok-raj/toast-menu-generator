@@ -9,12 +9,19 @@ Usage:
     python main.py generate-reports         # Generate analysis reports
     python main.py search-items <term>      # Search for menu items
     python main.py pricing-analysis         # Show pricing statistics
+    python main.py extract-images [options] # Extract menu item names and images
     python main.py clear-cache              # Clear all cached data
     
 Options for generate-menu:
     --with-price    Include prices in output
     --filter-3pd    Include only 3rd party delivery items
     --format        Output format: pdf, html, txt (default: all)
+
+Options for extract-images:
+    --filter-3pd    Include only 3rd party delivery items
+    --format        Output format: text, json, csv (default: text)
+                   Note: All formats download images to images/ directory, generate CSV,
+                   and create missing_pictures.txt for items without images
 """
 
 import sys
@@ -292,20 +299,195 @@ def clear_cache() -> int:
     try:
         menu_service = MenuService()
         menu_service.clear_cache()
-        
+
         # Also clear token cache
         from toast_api.utils.cache import TokenCache
         from toast_api.config.settings import config
-        
+
         token_cache = TokenCache(config.token_cache_file)
         # Clear by saving empty token (hacky but works)
         from datetime import datetime
         token_cache.save_token("", datetime.now())
-        
+
         print("🗑️ All caches cleared")
         return 0
     except Exception as e:
         logger.error(f"Error clearing cache: {e}")
+        return 1
+
+
+def extract_images(args: argparse.Namespace) -> int:
+    """Extract menu item names and images from Toast POS."""
+    try:
+        import os
+        import requests
+        import csv
+        from urllib.parse import urlparse
+
+        menu_service = MenuService()
+
+        print("🖼️ Extracting menu items and images from Toast POS...")
+
+        # Create images directory
+        images_dir = "images"
+        if not os.path.exists(images_dir):
+            os.makedirs(images_dir)
+            print(f"📁 Created directory: {images_dir}")
+
+        # Get all menu items with images
+        items_with_images = menu_service.get_items_with_images(
+            include_3pd=args.filter_3pd,
+            format=args.format
+        )
+
+        if not items_with_images:
+            print("❌ No menu items with images found")
+            return 0
+
+        total_items = len(items_with_images)
+        items_with_images_count = len([item for item in items_with_images if item.get('images')])
+
+        print(f"\n📊 Image Extraction Results:")
+        print(f"  Total Items: {total_items}")
+        print(f"  Items with Images: {items_with_images_count}")
+        print(f"  Items without Images: {total_items - items_with_images_count}")
+
+        # Download images and prepare data for CSV
+        csv_data = []
+        downloaded_count = 0
+        missing_pictures = []
+
+        for item in items_with_images:
+            images = item.get('images', [])
+            item_name = item['name']
+
+            # Clean item name for filename
+            safe_name = "".join(c for c in item_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+            safe_name = safe_name.replace(' ', '_')
+
+            local_image_files = []
+
+            for i, img_url in enumerate(images):
+                try:
+                    # Parse URL to get file extension
+                    parsed_url = urlparse(img_url)
+                    file_ext = os.path.splitext(parsed_url.path)[1] or '.jpg'
+
+                    # Create filename
+                    if len(images) > 1:
+                        filename = f"{safe_name}_{i+1}{file_ext}"
+                    else:
+                        filename = f"{safe_name}{file_ext}"
+
+                    filepath = os.path.join(images_dir, filename)
+
+                    # Download image
+                    response = requests.get(img_url, timeout=30)
+                    response.raise_for_status()
+
+                    with open(filepath, 'wb') as f:
+                        f.write(response.content)
+
+                    local_image_files.append(filename)
+                    downloaded_count += 1
+                    print(f"📥 Downloaded: {filename}")
+
+                except Exception as e:
+                    logger.warning(f"Failed to download image for {item_name}: {e}")
+                    continue
+
+            # Track items missing pictures
+            if not images:
+                missing_pictures.append({
+                    'name': item_name,
+                    'group': item.get('group', ''),
+                    'price': item.get('formatted_price', '')
+                })
+
+            # Add to CSV data
+            csv_data.append({
+                'item_name': item_name,
+                'group': item.get('group', ''),
+                'price': item.get('formatted_price', ''),
+                'image_files': '|'.join(local_image_files) if local_image_files else '',
+                'image_count': len(local_image_files),
+                'has_images': 'Yes' if local_image_files else 'No'
+            })
+
+        # Generate CSV with local image filenames
+        output_file = "menu_items_with_local_images.csv"
+        with open(output_file, 'w', newline='', encoding='utf-8') as csvfile:
+            fieldnames = ['item_name', 'group', 'price', 'image_files', 'image_count', 'has_images']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+            for row in csv_data:
+                writer.writerow(row)
+
+        # Generate missing pictures file
+        missing_file = "missing_pictures.txt"
+        with open(missing_file, 'w', encoding='utf-8') as f:
+            f.write("Menu Items Missing Pictures\n")
+            f.write("=" * 50 + "\n\n")
+
+            if missing_pictures:
+                # Group by category
+                from collections import defaultdict
+                by_group = defaultdict(list)
+
+                for item in missing_pictures:
+                    group = item['group'] or 'No Category'
+                    by_group[group].append(item)
+
+                # Write grouped items
+                for group, items in sorted(by_group.items()):
+                    f.write(f"{group}:\n")
+                    f.write("-" * len(group) + "\n")
+                    for item in sorted(items, key=lambda x: x['name']):
+                        price_info = f" ({item['price']})" if item['price'] else ""
+                        f.write(f"  • {item['name']}{price_info}\n")
+                    f.write("\n")
+
+                f.write(f"Total items missing pictures: {len(missing_pictures)}\n")
+            else:
+                f.write("All menu items have pictures!\n")
+
+        print(f"\n✅ Download Summary:")
+        print(f"  Images Downloaded: {downloaded_count}")
+        print(f"  Items Missing Pictures: {len(missing_pictures)}")
+        print(f"  CSV Generated: {output_file}")
+        print(f"  Missing Pictures List: {missing_file}")
+        print(f"  Images Directory: {images_dir}/")
+
+        if args.format == 'json':
+            import json
+            from toast_api.utils.file_utils import write_text_file
+
+            json_output_file = "menu_items_with_images.json"
+            write_text_file(json_output_file, json.dumps(items_with_images, indent=2))
+            print(f"  JSON Output: {json_output_file}")
+
+        elif args.format == 'text':
+            print(f"\n🍽️ Menu Items with Downloaded Images:\n")
+
+            for item in csv_data:
+                print(f"✓ {item['item_name']}")
+                if item['group']:
+                    print(f"  Category: {item['group']}")
+                if item['price']:
+                    print(f"  Price: {item['price']}")
+                if item['image_files']:
+                    files = item['image_files'].split('|')
+                    print(f"  Local Images ({len(files)}):")
+                    for i, filename in enumerate(files, 1):
+                        print(f"    {i}. images/{filename}")
+                else:
+                    print(f"  Images: None")
+                print()
+
+        return 0
+    except Exception as e:
+        logger.error(f"Error extracting images: {e}")
         return 1
 
 
@@ -351,7 +533,12 @@ def main() -> int:
     
     # Clear cache command
     subparsers.add_parser("clear-cache", help="Clear all cached data")
-    
+
+    # Extract images command
+    images_parser = subparsers.add_parser("extract-images", help="Extract menu item names and images")
+    images_parser.add_argument("--filter-3pd", action="store_true", help="Filter for 3rd party delivery items")
+    images_parser.add_argument("--format", choices=["text", "json", "csv"], default="text", help="Output format")
+
     args = parser.parse_args()
     
     # Setup logging
@@ -376,6 +563,8 @@ def main() -> int:
         return pricing_analysis()
     elif args.command == "clear-cache":
         return clear_cache()
+    elif args.command == "extract-images":
+        return extract_images(args)
     else:
         parser.print_help()
         return 1

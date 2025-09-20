@@ -44,6 +44,11 @@ class ToastConfig:
     def menus_url(self) -> str:
         """Get menus API URL."""
         return f"{self.hostname}/menus/v2/menus"
+
+    @property
+    def config_menu_items_url(self) -> str:
+        """Get config menu items API URL (includes images)."""
+        return f"{self.hostname}/config/v2/menuItems"
     
     def get_auth_headers(self, token: str) -> dict:
         """Get headers for authenticated requests."""

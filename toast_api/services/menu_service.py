@@ -207,3 +207,85 @@ class MenuService:
                 print(f"❌ No items found matching '{search_term}'")
 
         return found_items
+
+    def get_items_with_images(self, include_3pd: bool = False, format: str = 'text') -> List[Dict[str, Any]]:
+        """Get all menu items with their images from Toast Config API."""
+        try:
+            # Fetch menu items with images from Config API
+            config_data = self.api_client.get_menu_items_with_images()
+
+            # Also get regular menu data to match groups
+            menu_data = self.get_menu_data()
+
+            # Build group mapping from regular menu data
+            group_mapping = {}
+            for menu in menu_data.get("menus", []):
+                menu_name = menu.get("name", "").lower()
+                has_3pd = "3pd" in menu_name
+
+                # Filter based on 3pd preference
+                if include_3pd and not has_3pd:
+                    continue
+                if not include_3pd and has_3pd:
+                    continue
+
+                # Skip certain menu types
+                if any(term in menu_name for term in ["owner", "otter", "happy", "beer", "catering", "weekend"]):
+                    continue
+
+                for group in menu.get("menuGroups", []):
+                    group_name = group.get("name", "")
+                    visibility = group.get("visibility", [])
+
+                    # Check visibility for 3pd
+                    if include_3pd and "ORDERING_PARTNERS" not in visibility:
+                        continue
+
+                    for item in group.get("menuItems", []):
+                        item_guid = item.get("guid", "")
+                        if item_guid:
+                            group_mapping[item_guid] = {
+                                'group': group_name,
+                                'menu': menu.get("name", "")
+                            }
+
+            # Process config API results
+            items_with_images = []
+
+            for item in config_data:
+                item_guid = item.get("guid", "")
+                item_name = item.get("name", "")
+                raw_images = item.get("images", [])
+                price = item.get("price")
+                formatted_price = f"${price:.2f}" if price is not None else ""
+
+                # Extract URLs from image objects
+                images = []
+                for img in raw_images:
+                    if isinstance(img, dict) and 'url' in img:
+                        images.append(img['url'])
+                    elif isinstance(img, str):
+                        images.append(img)
+
+                # Get group info from mapping
+                group_info = group_mapping.get(item_guid, {})
+
+                # Only include items that are in our filtered menus
+                if group_info or not group_mapping:  # Include all if no filtering
+                    item_data = {
+                        'guid': item_guid,
+                        'name': item_name,
+                        'images': images,
+                        'price': price,
+                        'formatted_price': formatted_price,
+                        'group': group_info.get('group', ''),
+                        'menu': group_info.get('menu', '')
+                    }
+                    items_with_images.append(item_data)
+
+            logger.info(f"✅ Found {len(items_with_images)} menu items with image data")
+            return items_with_images
+
+        except Exception as e:
+            logger.error(f"Error fetching items with images: {e}")
+            return []

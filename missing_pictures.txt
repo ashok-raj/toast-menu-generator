@@ -1,0 +1,156 @@
+Menu Items Missing Pictures
+==================================================
+
+Bread Corner:
+------------
+  • Extra Parota
+  • Extra Poori
+  • Panner Naan
+
+Chicken Curries:
+---------------
+  • Chettinad Chicken Curry
+  • Chicken (Butter Masala) Makhani
+  • Chicken Curry
+  • Chicken Jalfrezi
+  • Chicken Rogan Josh
+  • Chicken Saag
+  • Chicken Vindaloo
+  • Mughlai Chicken Korma
+
+Dessert:
+-------
+  • Brownie w/ Vanilla Ice Cream
+  • Carrot Halwa
+  • Carrot Halwa w/ Vanilla Ice Cream
+  • Gulab Jamun
+  • Gulab Jamun w/ Vanilla Ice Cream
+  • Ice Cream
+  • Mango Kulfi
+  • Payasam
+  • Rasamalai (2 Pieces)
+
+Dosa:
+----
+  • Cheese Masala Dosa
+  • Chennai Family Dosa
+  • Chennai Masala Paper Roast
+  • Chicken Tikka Dosa
+  • Chilli Uttapam
+  • Chole Dosa
+  • Egg Dosa
+  • Ghee Dosa
+  • Ghee Roast
+  • Karaikudi Dosa
+  • Lamb Kheema Dosa
+  • Masala Dosa
+  • Masala Ghee Roast
+  • Onion Chilli Rava Masala Dosa
+  • Onion Chilli Uttapam
+  • Onion Dosa
+  • Onion Rava Dosa
+  • Onion Rava Masala Dosa
+  • Onion Tomato Chilli Uttapam
+  • Onion Tomato Uttapam
+  • Onion Uttapam
+  • Paneer Bhurji Dosa
+  • Plain Dosa
+  • Plain Uttapam
+  • Spinach Masala Dosa
+  • Tomato Uttapam
+  • Veg Chinese Spring Dosa
+  • Vegetable Uttapam
+  • Wheat Flour Dosa
+
+Extras:
+------
+  • Chutney (8oz)
+  • Ghee
+  • Papad
+  • Pickle
+  • Potato Masala (8oz)
+  • Potato Masala @Table
+  • Raita
+  • Raita @Table
+  • Rasam
+  • Rice
+  • Salad
+  • Sambar
+  • Sambar @Table
+  • Yogurt
+
+Fish Curries:
+------------
+  • Chennai Fish Curry
+  • Malabar Fish Curry
+
+Indo-Chinese:
+------------
+  • Chicken Fried Rice
+  • Chilli Chicken (Dry)
+  • Chilli Chicken (Gravy)
+  • Chilli Panner (Dry)
+  • Chilli Panner (Gravy)
+  • Egg Fried Rice
+  • Shrimp Noodles
+
+Kids Corner:
+-----------
+  • Mini Cheese Dosa
+
+Lamb Curries:
+------------
+  • Goat Chukka
+  • Goat Curry
+  • Lamb (Butter Masala) Makhani
+  • Lamb Chettinad
+  • Lamb Curry
+  • Lamb Jalfrezi
+  • Lamb Rogan Josh
+  • Lamb Saag
+  • Lamb Tikka Masala
+  • Lamb Vindaloo
+  • Muglai Lamb Korma
+
+Rice Corner:
+-----------
+  • Goat Biriyani
+  • Lamb Biriyani
+  • Shrimp Biriyani
+  • Vegetable Biriyani
+
+Shrimp Curries:
+--------------
+  • Chettinad Shrimp Masala
+  • Shrimp Curry
+  • Shrimp Jalfrezi
+  • Shrimp Korma
+  • Shrimp Rogan Josh
+  • Shrimp Saag
+  • Shrimp Tikka Masala
+  • Shrimp Vindaloo
+
+Vegetarian Curries:
+------------------
+  • Aloo Gobi Masala
+  • Baigan Bhartha
+  • Bhindi Masala
+  • Channa (Chole) Masala
+  • Chettinad Vegetable Curry
+  • Dal Makhani
+  • Dal Tadka
+  • Egg Curry
+  • Eggplant Curry (Andhra Style)
+  • Kadai Panner
+  • Malai Kofta
+  • Mushroom Saag
+  • Mutter Paneer
+  • Navrathan Korma
+  • Palak Paneer
+  • Paneer (Butter Masala) Makhani
+  • Paneer Mutter Mushroom
+  • Paneer Tikka Masala
+  • Paneer Vindaloo
+  • Vegetable Jalfrezi
+
+Total items missing pictures: 116

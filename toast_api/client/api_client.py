@@ -74,34 +74,34 @@ class ToastAPIClient:
         """Get menu items for a specific group."""
         menu_data = self.get_menus()
         items = []
-        
+
         for menu in menu_data.get("menus", []):
             menu_name = menu.get("name", "").lower()
             has_3pd = "3pd" in menu_name
-            
+
             # Filter based on 3pd preference
             if include_3pd and not has_3pd:
                 continue
             if not include_3pd and has_3pd:
                 continue
-            
+
             # Skip certain menu types
             if any(term in menu_name for term in ["owner", "otter", "happy", "beer", "catering", "weekend"]):
                 continue
-            
+
             for group in menu.get("menuGroups", []):
                 if group.get("name") == group_name:
                     visibility = group.get("visibility", [])
-                    
+
                     # Check visibility for 3pd
                     if include_3pd and "ORDERING_PARTNERS" not in visibility:
                         continue
-                    
+
                     for item in group.get("menuItems", []):
                         item_name = item.get("name", "")
                         price = item.get("price")
                         formatted_price = f"${price:.2f}" if price is not None else ""
-                        
+
                         items.append({
                             "name": item_name,
                             "price": price,
@@ -109,5 +109,14 @@ class ToastAPIClient:
                             "menu": menu.get("name", ""),
                             "group": group_name
                         })
-        
+
         return items
+
+    def get_menu_items_with_images(self) -> Dict[str, Any]:
+        """Fetch menu items with image data from Toast Config API."""
+        logger.info("📡 Fetching menu items with images from Config API")
+
+        data = self._make_request('GET', config.config_menu_items_url)
+
+        logger.info("✅ Menu items with images fetched successfully")
+        return data
