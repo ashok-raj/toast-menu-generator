@@ -396,8 +396,8 @@ def extract_images(args: argparse.Namespace) -> int:
                     logger.warning(f"Failed to download image for {item_name}: {e}")
                     continue
 
-            # Track items missing pictures
-            if not images:
+            # Track items missing pictures (either no images list or empty images list)
+            if not images or len(images) == 0:
                 missing_pictures.append({
                     'name': item_name,
                     'group': item.get('group', ''),
