@@ -283,15 +283,16 @@ class ReportService:
             """Draw footer information."""
             c.setFont("Helvetica", 8)
             footer_y = margin_bottom * 0.6
-            
+
             if self.restaurant.phone or self.restaurant.website:
-                c.drawString(inch * 0.5, footer_y + 28, f"Contact: {self.restaurant.formatted_contact}")
-            
+                c.drawString(inch * 0.5, footer_y + 30, f"Contact: {self.restaurant.formatted_contact}")
+
             if self.restaurant.address:
-                c.drawString(inch * 0.5, footer_y + 14, f"Address: {self.restaurant.address}")
-            
+                c.drawString(inch * 0.5, footer_y + 20, f"Address: {self.restaurant.address}")
+
+            c.drawString(inch * 0.5, footer_y + 10, "Hours: Monday Closed • Tuesday–Sunday 11:00am–2:00pm and 5:00pm–9:30pm")
             c.drawString(inch * 0.5, footer_y, "Menu items and prices subject to change.")
-            
+
             # Page number
             c.drawRightString(w - inch * 0.5, footer_y, f"Page {page_count}")
         

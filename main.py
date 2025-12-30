@@ -159,7 +159,7 @@ def _generate_text_menu(grouped_items, group_order, args):
                 content.append(f"  • {item['name']}")
         content.append("")
 
-    content.append("Hours: Monday Closed • Tuesday–Sunday 11:00am–2:00pm and 5:00pm–9:00pm")
+    content.append("Hours: Monday Closed • Tuesday–Sunday 11:00am–2:00pm and 5:00pm–9:30pm")
     content.append("Menu items and prices subject to change.")
 
     write_text_file(output_file, "\n".join(content))
@@ -206,7 +206,7 @@ footer {{ margin-top: 3em; font-size: 0.9em; text-align: center; }}
 
     html_content += """
 <footer>
-<p>Hours: Monday Closed • Tuesday–Sunday 11:00am–2:00pm and 5:00pm–9:00pm</p>
+<p>Hours: Monday Closed • Tuesday–Sunday 11:00am–2:00pm and 5:00pm–9:30pm</p>
 <p>Menu items and prices subject to change.</p>
 </footer>
 </body></html>"""
