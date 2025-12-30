@@ -1,5 +1,8 @@
 Soft Drinks
 Lassi
+Coffee
+Tea
+Healthy Combos
 Indo-Chinese
 Vegetarian Appetizers
 Non-Vegetarian Appetizers
@@ -10,7 +13,6 @@ Chicken Curries
 Lamb Curries
 Fish Curries
 Shrimp Curries
-Healthy Combos
 Bread Corner
 Kids Corner
 Dessert
