@@ -28,7 +28,7 @@ import sys
 import argparse
 from typing import List
 
-from toast_api.services.menu_service import MenuService
+from toast_api.services.menu_service import MenuService, get_display_name, get_display_groups, merge_grouped_items
 from toast_api.services.report_service import ReportService
 from toast_api.utils.logger import logger, setup_logger
 from toast_api.utils.formatters import format_currency, format_menu_item_display
@@ -132,21 +132,25 @@ def _generate_text_menu(grouped_items, group_order, args):
     """Generate text format menu."""
     from toast_api.config.settings import config
     from toast_api.utils.file_utils import write_text_file
-    
+
     extension = "_with3pd" if args.filter_3pd else ""
     output_file = f"takeout_menu{extension}.txt"
-    
+
+    # Merge groups and get display order
+    merged_items = merge_grouped_items(grouped_items, group_order)
+    display_order = get_display_groups(group_order)
+
     content = []
     content.append(f"{config.restaurant_name} – Takeout Menu")
     content.append(f"{config.restaurant_address}")
     content.append(f"{config.restaurant_phone} • {config.restaurant_website}")
     content.append("")
-    
-    for group in group_order:
-        items = grouped_items.get(group, [])
+
+    for group in display_order:
+        items = merged_items.get(group, [])
         if not items:
             continue
-            
+
         content.append(f"🌟 {group}")
         for item in items:
             if args.with_price and item['formatted_price']:
@@ -154,10 +158,10 @@ def _generate_text_menu(grouped_items, group_order, args):
             else:
                 content.append(f"  • {item['name']}")
         content.append("")
-    
+
     content.append("Hours: Monday Closed • Tuesday–Sunday 11:00am–2:00pm and 5:00pm–9:00pm")
     content.append("Menu items and prices subject to change.")
-    
+
     write_text_file(output_file, "\n".join(content))
 
 
@@ -165,10 +169,14 @@ def _generate_html_menu(grouped_items, group_order, args):
     """Generate HTML format menu."""
     from toast_api.config.settings import config
     from toast_api.utils.file_utils import write_text_file
-    
+
     extension = "_with3pd" if args.filter_3pd else ""
     output_file = f"preview_menu{extension}.html"
-    
+
+    # Merge groups and get display order
+    merged_items = merge_grouped_items(grouped_items, group_order)
+    display_order = get_display_groups(group_order)
+
     html_content = f"""<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>{config.restaurant_name} – Takeout Menu</title>
 <style>
@@ -182,12 +190,12 @@ footer {{ margin-top: 3em; font-size: 0.9em; text-align: center; }}
 <p style="text-align:right">{config.restaurant_address}<br>
 {config.restaurant_phone} • <a href="https://{config.restaurant_website}">{config.restaurant_website}</a></p>
 """
-    
-    for group in group_order:
-        items = grouped_items.get(group, [])
+
+    for group in display_order:
+        items = merged_items.get(group, [])
         if not items:
             continue
-            
+
         html_content += f'<div class="group"><h2>{group}</h2>\n'
         for item in items:
             if args.with_price and item['formatted_price']:
@@ -195,14 +203,14 @@ footer {{ margin-top: 3em; font-size: 0.9em; text-align: center; }}
             else:
                 html_content += f'<div class="item"><span>{item["name"]}</span></div>\n'
         html_content += '</div>\n'
-    
+
     html_content += """
 <footer>
 <p>Hours: Monday Closed • Tuesday–Sunday 11:00am–2:00pm and 5:00pm–9:00pm</p>
 <p>Menu items and prices subject to change.</p>
 </footer>
 </body></html>"""
-    
+
     write_text_file(output_file, html_content)
 
 

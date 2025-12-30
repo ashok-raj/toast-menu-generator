@@ -7,7 +7,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 
-from toast_api.services.menu_service import MenuService  
+from toast_api.services.menu_service import MenuService, get_display_name, get_display_groups, merge_grouped_items  
 from toast_api.config.settings import config
 from toast_api.utils.logger import logger
 
@@ -69,18 +69,22 @@ class MenuGenerator:
     
     def _generate_text_menu(self, grouped_items: Dict[str, List[Dict]], group_order: List[str]) -> None:
         """Generate text format menu."""
+        # Merge groups and get display order
+        merged_items = merge_grouped_items(grouped_items, group_order)
+        display_order = get_display_groups(group_order)
+
         with open(self.text_file, "w") as f:
             # Header
             f.write(f"{self.restaurant_info['name']} – Takeout Menu\n")
             f.write(f"{self.restaurant_info['address']}\n")
             f.write(f"{self.restaurant_info['phone']} • {self.restaurant_info['website']}\n\n")
-            
+
             # Menu items
-            for group in group_order:
-                items = grouped_items.get(group, [])
+            for group in display_order:
+                items = merged_items.get(group, [])
                 if not items:
                     continue
-                    
+
                 f.write(f"🌟 {group}\n")
                 for item in items:
                     if self.include_prices and item['formatted_price']:
@@ -88,11 +92,11 @@ class MenuGenerator:
                     else:
                         f.write(f"  • {item['name']}\n")
                 f.write("\n")
-            
+
             # Footer
             f.write(f"Hours:\n{self.restaurant_info['hours']}\n\n")
             f.write(f"{self.restaurant_info['disclaimer']}\n")
-        
+
         logger.info(f"📝 Saved: {self.text_file}")
     
     def _generate_pdf_menu(self, grouped_items: Dict[str, List[Dict]], group_order: List[str]) -> None:
@@ -112,6 +116,10 @@ class MenuGenerator:
     
     def _generate_html_menu(self, grouped_items: Dict[str, List[Dict]], group_order: List[str]) -> None:
         """Generate HTML format menu."""
+        # Merge groups and get display order
+        merged_items = merge_grouped_items(grouped_items, group_order)
+        display_order = get_display_groups(group_order)
+
         with open(self.html_file, "w") as f:
             f.write(f"""<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>{self.restaurant_info['name']} – Takeout Menu</title>
@@ -126,13 +134,13 @@ footer {{ margin-top: 3em; font-size: 0.9em; text-align: center; }}
 <p style="text-align:right">{self.restaurant_info['address']}<br>
 {self.restaurant_info['phone']} • <a href="https://{self.restaurant_info['website']}">{self.restaurant_info['website']}</a></p>
 """)
-            
+
             # Menu items
-            for group in group_order:
-                items = grouped_items.get(group, [])
+            for group in display_order:
+                items = merged_items.get(group, [])
                 if not items:
                     continue
-                    
+
                 f.write(f'<div class="group"><h2>{group}</h2>\n')
                 for item in items:
                     if self.include_prices and item['formatted_price']:
@@ -140,7 +148,7 @@ footer {{ margin-top: 3em; font-size: 0.9em; text-align: center; }}
                     else:
                         f.write(f'<div class="item"><span>{item["name"]}</span></div>\n')
                 f.write('</div>\n')
-            
+
             # Footer
             f.write(f"""
 <footer>
@@ -148,7 +156,7 @@ footer {{ margin-top: 3em; font-size: 0.9em; text-align: center; }}
 <p>{self.restaurant_info['disclaimer']}</p>
 </footer>
 </body></html>""")
-        
+
         logger.info(f"🌐 Saved: {self.html_file}")
 
 def main():

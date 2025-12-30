@@ -8,6 +8,69 @@ from ..models.menu import Menu, MenuGroup, MenuItem
 import os
 import json
 
+# Category display name mapping (Toast API name -> Display name)
+CATEGORY_DISPLAY_NAMES = {
+    "Lassi": "Lassi Corner",
+    "Dosa": "Dosa Corner",
+    "Dessert": "Desserts",
+}
+
+# Groups to merge into a single display group
+# Format: "Display Name": ["Source Group 1", "Source Group 2", ...]
+MERGED_GROUPS = {
+    "Hot Drinks": ["Coffee", "Tea"],
+}
+
+def get_display_name(category: str) -> str:
+    """Get the display name for a category, or return original if no mapping exists."""
+    return CATEGORY_DISPLAY_NAMES.get(category, category)
+
+def get_merged_group_name(category: str) -> str:
+    """Check if a category should be merged into another group. Returns merged name or None."""
+    for merged_name, source_groups in MERGED_GROUPS.items():
+        if category in source_groups:
+            return merged_name
+    return None
+
+def get_display_groups(group_order: list) -> list:
+    """Get the display group order, replacing merged groups with their combined name."""
+    display_order = []
+    merged_added = set()
+
+    for group in group_order:
+        merged_name = get_merged_group_name(group)
+        if merged_name:
+            # Add merged group name only once, at position of first source group
+            if merged_name not in merged_added:
+                display_order.append(merged_name)
+                merged_added.add(merged_name)
+        else:
+            display_order.append(group)
+
+    return display_order
+
+def merge_grouped_items(grouped_items: dict, group_order: list) -> dict:
+    """Merge items from source groups into combined display groups."""
+    merged_items = {}
+
+    for group in group_order:
+        items = grouped_items.get(group, [])
+        if not items:
+            continue
+
+        merged_name = get_merged_group_name(group)
+        if merged_name:
+            # Add items to merged group
+            if merged_name not in merged_items:
+                merged_items[merged_name] = []
+            merged_items[merged_name].extend(items)
+        else:
+            # Use display name for non-merged groups
+            display_name = get_display_name(group)
+            merged_items[display_name] = items
+
+    return merged_items
+
 class MenuService:
     """Service for menu operations."""
     

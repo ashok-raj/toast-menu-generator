@@ -9,7 +9,7 @@ from reportlab.lib.units import inch
 
 from ..models.menu import Menu, MenuGroup, MenuItem
 from ..models.restaurant import Restaurant
-from ..services.menu_service import MenuService
+from ..services.menu_service import MenuService, get_display_name, get_display_groups, merge_grouped_items
 from ..config.settings import config
 from ..utils.logger import logger
 
@@ -224,7 +224,11 @@ class ReportService:
             include_3pd=include_3pd,
             include_prices=include_prices
         )
-    
+
+        # Merge groups and get display order
+        merged_items = merge_grouped_items(grouped_items, group_order)
+        display_order = get_display_groups(group_order)
+
         # Use provided logo path or automatically detected one
         logo_to_use = logo_path or self.logo_path
     
@@ -327,15 +331,15 @@ class ReportService:
         c.setFont("Helvetica", 10)
         
         # Process each group
-        for group_name in group_order:
-            items = grouped_items.get(group_name, [])
+        for group_name in display_order:
+            items = merged_items.get(group_name, [])
             if not items:
                 continue
-            
+
             # Calculate space needed for group header + at least 3 items
             lines_needed = 2 + min(3, len(items))  # Header + items
             check_space_and_move_if_needed(lines_needed)
-            
+
             # Group header
             y -= line_height
             c.setFont("Helvetica-Bold", 11)
