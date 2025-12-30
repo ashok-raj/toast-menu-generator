@@ -2,6 +2,7 @@ Soft Drinks
 Lassi
 Coffee
 Tea
+Kids Corner
 Healthy Combos
 Indo-Chinese
 Vegetarian Appetizers
@@ -14,5 +15,4 @@ Lamb Curries
 Fish Curries
 Shrimp Curries
 Bread Corner
-Kids Corner
 Dessert
