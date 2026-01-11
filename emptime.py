@@ -469,25 +469,56 @@ def format_employee_summary(employee_name: str, time_logs: List[Dict]) -> None:
 def get_employee_name_by_guid(client: ToastAPIClient, employee_guid: str) -> str:
     """
     Get employee name by matching GUID from the employee list
-    
+
     Args:
         client: ToastAPIClient instance
         employee_guid: The GUID to look up
-        
+
     Returns:
         Employee name or 'Unknown Employee'
     """
     employees = client.get_all_employees()
     if not employees:
         return "Unknown Employee"
-    
+
     for emp in employees:
         if emp.get('guid') == employee_guid:
             first_name = emp.get('firstName', '')
             last_name = emp.get('lastName', '')
             return f"{first_name} {last_name}".strip()
-    
+
     return "Unknown Employee"
+
+def find_employees_by_name(client: ToastAPIClient, search_name: str) -> List[Dict]:
+    """
+    Find employees by partial name match (case-insensitive)
+
+    Args:
+        client: ToastAPIClient instance
+        search_name: Partial or full name to search for
+
+    Returns:
+        List of matching employee dictionaries
+    """
+    employees = client.get_all_employees()
+    if not employees:
+        return []
+
+    search_lower = search_name.lower()
+    matches = []
+
+    for emp in employees:
+        first_name = emp.get('firstName', '').lower()
+        last_name = emp.get('lastName', '').lower()
+        full_name = f"{first_name} {last_name}".strip()
+
+        # Check if search term appears in first name, last name, or full name
+        if (search_lower in first_name or
+            search_lower in last_name or
+            search_lower in full_name):
+            matches.append(emp)
+
+    return matches
 
 def load_config() -> Dict[str, str]:
     """
@@ -525,13 +556,15 @@ def main():
     """
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description='Toast API Time Logs Manager')
-    parser.add_argument('-t', '--time-logs', action='store_true', 
+    parser.add_argument('-t', '--time-logs', action='store_true',
                        help='Get time logs for employees (uses previous week: Sunday to Saturday)')
-    parser.add_argument('-s', '--start', type=str, 
+    parser.add_argument('-s', '--start', type=str,
                        help='Start date (YYYY-MM-DD) - must be used with -e')
-    parser.add_argument('-e', '--end', type=str, 
+    parser.add_argument('-e', '--end', type=str,
                        help='End date (YYYY-MM-DD) - must be used with -s')
-    parser.add_argument('-d', '--debug', action='store_true', 
+    parser.add_argument('-E', '--employee', type=str,
+                       help='Search for employee by name (partial match, case-insensitive)')
+    parser.add_argument('-d', '--debug', action='store_true',
                        help='Enable debug output showing detailed API responses')
     args = parser.parse_args()
     
@@ -571,8 +604,93 @@ def main():
     if not client.authenticate():
         print("Authentication failed. Please check your credentials and server name.")
         return
-    
-    if args.time_logs or (args.start and args.end):
+
+    if args.employee:
+        # Employee search mode
+        print(f"Searching for employees matching '{args.employee}'...")
+        matches = find_employees_by_name(client, args.employee)
+
+        if not matches:
+            print(f"No employees found matching '{args.employee}'")
+            return
+
+        if len(matches) == 1:
+            # Single match - use it
+            emp = matches[0]
+            employee_name = f"{emp.get('firstName', '')} {emp.get('lastName', '')}".strip()
+            employee_guid = emp.get('guid')
+            print(f"Found: {employee_name} (GUID: {employee_guid})")
+        else:
+            # Multiple matches - show them
+            print(f"\nFound {len(matches)} matching employees:")
+            print(f"{'#':<3} {'Name':<30} {'GUID':<40}")
+            print(f"{'-'*75}")
+            for i, emp in enumerate(matches, 1):
+                name = f"{emp.get('firstName', '')} {emp.get('lastName', '')}".strip()
+                guid = emp.get('guid', 'N/A')
+                print(f"{i:<3} {name:<30} {guid:<40}")
+            print()
+
+        # Determine date range
+        if args.start and args.end:
+            start_date = args.start
+            end_date = args.end
+            print(f"Using custom date range: {start_date} to {end_date}")
+        else:
+            start_date, end_date = get_previous_week_dates()
+            print(f"Using previous week: {start_date} (Sunday) to {end_date} (Saturday)")
+
+        # Get time logs for matched employee(s)
+        print(f"\n{'='*60}")
+        print(f"TIME LOG SUMMARY ({start_date} to {end_date})")
+        print(f"{'='*60}")
+
+        all_time_logs = []
+        grand_total_regular = 0.0
+        grand_total_overtime = 0.0
+
+        for emp in matches:
+            employee_name = f"{emp.get('firstName', '')} {emp.get('lastName', '')}".strip()
+            employee_guid = emp.get('guid')
+
+            time_logs = client.get_employee_time_logs(employee_guid, start_date, end_date, args.debug)
+
+            if time_logs:
+                format_employee_summary(employee_name, time_logs)
+                all_time_logs.extend(time_logs)
+
+                for entry in time_logs:
+                    grand_total_regular += entry.get('regularHours', 0)
+                    grand_total_overtime += entry.get('overtimeHours', 0)
+            else:
+                print(f"{employee_name}: No time logs found")
+                print()
+
+        # Display grand totals if multiple employees
+        if len(matches) > 1:
+            grand_total_hours = grand_total_regular + grand_total_overtime
+            print(f"{'='*60}")
+            print(f"GRAND TOTALS FOR ALL MATCHED EMPLOYEES:")
+            print(f"{'='*60}")
+            print(f"Total Regular Hours: {grand_total_regular:.2f}")
+            print(f"Total Overtime Hours: {grand_total_overtime:.2f}")
+            print(f"TOTAL HOURS: {grand_total_hours:.2f}")
+            print(f"Total Employees: {len(matches)}")
+            print(f"{'='*60}")
+
+        # Save detailed data to JSON file if any logs found
+        if all_time_logs:
+            search_term = args.employee.replace(' ', '_')
+            filename = f"time_logs_{search_term}_{start_date}_to_{end_date}.json"
+            try:
+                with open(filename, 'w') as f:
+                    json.dump(all_time_logs, f, indent=2)
+                print(f"\nDetailed time log entries saved to {filename}")
+                print(f"Total detailed entries: {len(all_time_logs)}")
+            except Exception as e:
+                print(f"Error saving detailed file: {e}")
+
+    elif args.time_logs or (args.start and args.end):
         # Time logs mode
         employee_guids = load_employee_guids("emp.guids", args.debug)
         if not employee_guids:
