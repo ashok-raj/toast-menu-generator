@@ -1,0 +1,76 @@
+====================================================================================================
+EMPLOYEE LIST                                                                                       
+====================================================================================================
+#   Name                      GUID                                     Email                         
+----------------------------------------------------------------------------------------------------
+1   Anita Casarez             79fe23ff-fc92-41b2-b109-0551df256931     c94df9c8-c8ff-4d73-a808-da24a4552d89@example.com
+2   Marianne  Carolina        0ad3dece-4fa7-4735-9776-d3aaae61f2fc     3557c226-374e-4781-aa2f-b6d2ff28bc11@example.com
+3   Patricia Limon            5fab5b93-750a-4357-9559-50e678cbebd3     9a85e18f-252f-4456-b1ae-d99e57477b63@example.com
+4   Anita Casarez             5c2ed3d1-87bf-4383-a9b0-6d3261fcaed3     anita@aa.com                  
+5   Andrew Perez              963bc63a-a207-47d0-ae82-4f8f89b7e883     andrew.perez@toasttab.com     
+6   Mara uzcanga Martinez     d1084af0-5bfa-47e8-bc54-82021f3227a9     35fb94be-8047-4688-acd8-fca2cb1c67ef@example.com
+7   Aftar Singh               75190c07-f237-45c5-bbaa-51015aeeab51     e03f20ba-de03-416a-a6d7-9b1a74080b48@example.com
+8   Abhinay Reddy             01614b80-3ea4-4443-8d37-9402de2fb0d4     30163a65-146d-4370-8df5-3b7bc6e7e9d4@example.com
+9   Sumathi Raj               809e6b35-9a20-49ee-840e-ec319543919e     raj.ashok@gmail.com           
+10  Louis Moo                 724e45fe-7571-41d8-bfff-3b7b23ed14bd     f2d15762-bf34-4435-b25a-565805730e07@example.com
+11  Laura Jiminez             dbfce258-c72a-4eef-bbe3-70beaae8c675     9a044278-6bc1-4b25-aa0b-fba81fae4fec@example.com
+12  Vishwa Vishwa             ac5228dd-52ab-4332-a03b-92d97af479c6     7e657215-0e50-4574-b46d-44d0503290a7@example.com
+13  Ashok Raj                 b8f24ac7-be1e-4626-b6f3-bba6c04db2f3     chennaipdx@gmail.com          
+14  Sasanca Penozala          15281e45-bc40-4ff5-825a-0d3b50c9d895     9473a1ea-3075-4788-b113-18b718ed0080@example.com
+15  Terry Clemente            1d92997e-b720-484a-ae77-25b49321b6ed     terry.clemente@toasttab.com   
+16  Joel  Joel                20e10d09-b17d-479e-8ae0-b9c4ad445799     c7b4ae42-e5af-49b4-b51a-3ed4b41711df@example.com
+17  Velerica Acosta           744295b3-3734-4fa3-94c9-35b340603336     899ae0b5-f9db-4701-850f-8bd278e69fc7@example.com
+18  Vamsi Vamsi               87c24b0b-52e3-49c3-a2f0-9003101e158f     81a46049-a117-4e53-93d5-e31d9753431c@example.com
+19  Chaithania Thota          c770f398-4bfb-4e45-9f00-481f2d5f2c03     00ec0d60-bf65-4a60-bd9f-3e73b78941fc@example.com
+20  Sumi Raj                  5ca2054d-c537-46a9-92bc-c498c15d619f     5327b033-ccea-4636-9b8b-225de8911ac4@example.com
+21  Natalie Herrera           2c7bb7dd-a375-4482-801f-53c82ead02b9     24210b14-1235-4115-9bbc-21534aeae046@example.com
+22  Beartriz Martinez         c3d182e9-3e3c-4819-8a51-31a594881551     eccdb6a6-5ff0-40a7-84be-ee75a872dca3@example.com
+23  Seema Thakur              0cdac099-7131-4bb6-9dcb-25e2bd6d4c11     5687959a-188f-46f5-b905-7baaac90188f@example.com
+24  William Gomez             2e578991-2671-4191-8370-aab3a2a10290     de66bb98-e0ee-4bd3-ac27-a81ae8fe64f5@example.com
+25  Cecilia Gonzale           c396df8f-24ee-466b-9696-c0a4f759b4bd     507c4f0a-d1bc-4f3f-8540-fa2070698502@example.com
+26  Elliot Northlake          c01081fa-82a8-4254-9fd1-b2bfd1e65919     elliot@chowlyinc.com          
+27  Ricardo Mendoza           57301271-f81c-4f3e-920f-acb0f8a846ec     709799e1-38de-46aa-8696-c7d125998db5@example.com
+28  Raheel Shaikh             f4ec79af-c6f2-44ea-bd05-cd38a3d81e9f     raheel_shaikh_chennaimasala@example.com
+29  Vargas Marco              96ec6e13-16bd-483c-99be-adc6fc5faed3     603b3560-c59d-41e9-bc3d-7aa54d356118@example.com
+30  Luis fernando Gonzalezlopez fb62dffb-09aa-4b57-81b8-69ef6a92ab67     a2bfaa3c-290f-4a96-b22a-46be61eba8e6@example.com
+31  Slyvistar Shetylol        417e8e91-326a-4e74-88b3-c3b6e472ee8a     slyvistar_shetylol_chennaimasala@example.com
+32  Romus Perez               29fae4ab-1809-4792-9ae3-c079442906f1     225ef246-3d2c-4e60-b90c-e781e18ebf44@example.com
+33  Default Online Ordering   ae98e007-9b6e-4c43-909d-41833e284e70     3f9f06f2-a55b-43ee-b01c-8480465dc8a2@toasttab.com
+34  Otter Integrations        a7ca15ea-5a06-4604-b809-7050fed95f74     integrations@tryotter.com     
+35  Deleted Random            8a93b24e-fcd9-4de9-a83c-733328ab3688     9491bb3a-cea7-4b0c-9e02-3c6fc6b4251f@example.com
+36  Vivek Khandeparkar        ed135f2f-702f-4613-89a3-1c6ba4c0228f     vivek_khandeparkar_chennaimasala@example.com
+37  Javier Cruz               a935e147-254a-4697-9d74-4ccdd5a19d6d     javier_cruz_chennaimasala@example.com
+38  Chowly TM                 95dc2bba-97ea-4ecf-99d4-0809be50e6eb     jbrielmaier@chowlyinc.com     
+39  Thalia Flores             fc8803c1-a910-42a2-8006-37d79ae10aa2     2b448bb4-48c5-40d7-bfba-5caf6849ca61@example.com
+40  Pedro Hernandez           def719c8-2010-4f19-9840-ceffed0e12ff     6f71b1e6-4774-420c-a09b-542100f39cfa@example.com
+41  Cruz Vazquez              eb0c670a-ce32-45b4-9a55-333b3bde6687     9799c3e1-0166-40b5-bdab-760b1e60841d@example.com
+42  Jozamy Jozamy             c0a37697-1655-40f2-a1ca-1a9d25e0e1d9     ca05b029-64e7-40ff-be60-f77eae4455de@example.com
+43  Vivek Fernandez           7c12b7be-3d6a-4499-966a-1fd62e83caba     vivekfernandesusa@gmail.com   
+44  Terrance Simoes           e4e8a39e-055c-49ea-bc82-e333396779d8     444f09c5-aa9a-4f24-96e0-ca8c8f59fd31@example.com
+45  Sumathi Raj               923a2be9-9d09-4602-8d9c-f654d5153c4c     rajnewhome2020@gmail.com      
+46  Meza Nelson               a444f49a-b6b8-4b77-8b9a-0a8f92dd8928     7a80cd36-247f-42d2-9943-513e64c38eac@example.com
+47  Anayali Sanchez           c8a762f2-1c37-45d1-bb44-0011d1290a31     6acb1a6f-ad74-4829-a8a7-70f6160c1575@example.com
+48  Jithu Langote             312e28d7-f5c5-4bb0-80f7-796ee0ef3bc6     janulangote45@yahoo.com       
+49  Scarlet Scarlet           49135e6e-5119-4893-a483-b0071f024f4d     ea007ffe-f8bc-4eb9-8d6f-7681d454049b@example.com
+50  TDS Driver                27c7b0ef-52d6-460b-8ef4-dac4597a18ff     06d868dd-73ac-4ad2-b204-4990e64cb325@toasttab.com
+51  Basha Basha               d026db27-c1b8-46cf-8816-a43f18c0ee74     amjathyasmin@gmail.com        
+52  ChennaiM Host1            f16d089e-5f4a-4151-8be8-adc658613683     3cb4bb2f-01f0-45cb-ae89-f402a5220f18@example.com
+53  Bianca Herrera            0679d43c-6f4f-41d8-a3ee-c0c44e38e2b5     33154cf0-f0ee-4098-8d7a-c4bfa38c5649@example.com
+54  Ashita Mandrekar          10c19e9b-8252-4211-9d7f-0ac317080fc7     e1845f6f-a918-4d1e-9ecb-d54351173ed1@example.com
+55  Ruben Ramos Perez         656e8a32-fa4f-4c6b-9edc-9152634150a8     f666b812-309a-4744-995c-6d9e0e2dfb5b@example.com
+56  Brandon  Lopez            efdfd5b1-f1f4-4b3a-963f-c1c5f318a060     brandon.lopez@toasttab.com    
+57  Perez Garcia              c29ed3ef-3bcc-4445-a1cc-c9fc7414ca4e     2fa61597-5aa6-48d7-a23d-21f6f2242a1b@example.com
+58  Skylar Taman              11ad1493-f906-47d2-8a29-6f2d214eeb29     c0d883c3-d83b-4cea-8cc5-b032ae3f914a@example.com
+59  Kamila Herrera            7350f372-93c4-4dbb-a5b4-30a4f8549641     f7ab11c0-5e02-46e2-9b1f-85aa356cc406@example.com
+60  Chennai Login             b2b08d87-35c6-4121-b79e-22e6ce5c3ece     logincmpdx@gmail.com          
+61  Karla Davila              e73efafb-8225-4721-b0e2-81867eedc6bd     a77c1815-4e12-4334-8a0f-a980a80253c3@example.com
+62  Javier Lopez              423ec52f-903f-4177-ab2f-d3404aca11be     f2d5b3ba-a567-47f7-abae-db3ee8950fc9@example.com
+63  Owner Integrations        fcba6d52-ca16-4ceb-a2a6-0cf5c982da38     integrations@owner.com        
+64  Nicholas Moore            b795d8a6-e7fc-426a-8e3d-bd1534ab31bf     nickm@aboveallaccounting.com  
+65  Pedro Vargas Chavez       5450b226-c344-487b-922a-450ccd192da4     8e5d7d54-3dda-4ac7-b72f-da8f3aa6caa4@example.com
+66  Perez Manuel              dc6e29e9-f6b0-4302-bf29-426b35dd267c     8ba76ac2-bd04-4fc0-bc95-1a4ce1f6b052@example.com
+67  Evelio Zamudio            70f875d8-0f9a-4c6f-9e0a-eaa05a394b60     d673ba51-260f-487f-9214-07c2194f8a61@example.com
+68  Perez Armando             ec0f9aef-ff67-4097-859e-5e158cf89f06     2c6c19ea-362b-4b8d-98eb-7abde857115f@example.com
+69  Maha Maha                 891aac20-ec94-449a-a243-d7ea2f330077     chennaimasalapayroll@gmail.com
+----------------------------------------------------------------------------------------------------
+Total employees: 69
