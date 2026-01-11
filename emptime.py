@@ -327,18 +327,26 @@ def load_employee_guids(filename: str = "emp.guids", debug: bool = False) -> Lis
 def convert_utc_to_pst(utc_datetime_str: str) -> str:
     """
     Convert UTC datetime string to PST
-    
+
     Args:
         utc_datetime_str: DateTime string in UTC (e.g., "2025-08-02T14:30:00.000-0000")
-        
+
     Returns:
         PST datetime string or original if conversion fails
     """
     try:
         from datetime import timezone, timedelta
-        
-        # Parse the UTC datetime
-        if utc_datetime_str.endswith('-0000'):
+        import re
+
+        # Handle timezone offset without colon (e.g., +0000 -> +00:00)
+        # This regex matches +/-HHMM at the end of the string
+        tz_pattern = r'([+-])(\d{2})(\d{2})$'
+        match = re.search(tz_pattern, utc_datetime_str)
+        if match:
+            # Convert +0000 to +00:00 format
+            dt_str = re.sub(tz_pattern, r'\1\2:\3', utc_datetime_str)
+            dt = datetime.fromisoformat(dt_str)
+        elif utc_datetime_str.endswith('-0000'):
             # Remove -0000 and treat as UTC
             dt_str = utc_datetime_str[:-5]
             dt = datetime.fromisoformat(dt_str).replace(tzinfo=timezone.utc)
@@ -351,13 +359,13 @@ def convert_utc_to_pst(utc_datetime_str: str) -> str:
             dt = datetime.fromisoformat(utc_datetime_str)
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
-        
+
         # Convert to PST (UTC-8)
         pst = timezone(timedelta(hours=-8))
         pst_dt = dt.astimezone(pst)
-        
+
         return pst_dt.isoformat()
-        
+
     except Exception as e:
         print(f"Warning: Could not convert datetime {utc_datetime_str} to PST: {e}")
         return utc_datetime_str
@@ -466,6 +474,56 @@ def format_employee_summary(employee_name: str, time_logs: List[Dict]) -> None:
     print(f"  Entries: {len(time_logs)}")
     print()
 
+def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> None:
+    """
+    Format and display detailed time entries for an employee
+    Shows date, time in, time out, and total hours for each entry
+
+    Args:
+        employee_name: Name of the employee
+        time_logs: List of time log entries for this employee
+    """
+    if not time_logs:
+        print(f"{employee_name}: No time logs found")
+        return
+
+    print(f"\n{employee_name}:")
+    print(f"  {'Date':<12} {'Time In':<10} {'Time Out':<10} {'Hours':<8}")
+    print(f"  {'-'*42}")
+
+    total_hours = 0.0
+
+    for entry in time_logs:
+        business_date = entry.get('businessDate', 'N/A')
+        in_date_utc = entry.get('inDate', '')
+        out_date_utc = entry.get('outDate', '')
+
+        # Extract time portion from PST converted datetime
+        time_in = 'N/A'
+        time_out = 'N/A'
+
+        if in_date_utc:
+            pst_in = convert_utc_to_pst(in_date_utc)
+            # Extract just the time part (HH:MM)
+            if 'T' in pst_in:
+                time_in = pst_in.split('T')[1][:5]
+
+        if out_date_utc:
+            pst_out = convert_utc_to_pst(out_date_utc)
+            if 'T' in pst_out:
+                time_out = pst_out.split('T')[1][:5]
+
+        regular_hours = entry.get('regularHours', 0)
+        overtime_hours = entry.get('overtimeHours', 0)
+        entry_hours = regular_hours + overtime_hours
+        total_hours += entry_hours
+
+        print(f"  {business_date:<12} {time_in:<10} {time_out:<10} {entry_hours:<8.2f}")
+
+    print(f"  {'-'*42}")
+    print(f"  {'Total:':<32} {total_hours:<8.2f}")
+    print()
+
 def get_employee_name_by_guid(client: ToastAPIClient, employee_guid: str) -> str:
     """
     Get employee name by matching GUID from the employee list
@@ -566,6 +624,8 @@ def main():
                        help='Search for employee by name (partial match, case-insensitive)')
     parser.add_argument('-d', '--debug', action='store_true',
                        help='Enable debug output showing detailed API responses')
+    parser.add_argument('-D', '--detailed', action='store_true',
+                       help='Show detailed time entries: date, time in, time out, and total hours')
     args = parser.parse_args()
     
     # Validate date arguments
@@ -656,7 +716,10 @@ def main():
             time_logs = client.get_employee_time_logs(employee_guid, start_date, end_date, args.debug)
 
             if time_logs:
-                format_employee_summary(employee_name, time_logs)
+                if args.detailed:
+                    format_detailed_time_entries(employee_name, time_logs)
+                else:
+                    format_employee_summary(employee_name, time_logs)
                 all_time_logs.extend(time_logs)
 
                 for entry in time_logs:
@@ -721,13 +784,16 @@ def main():
             if time_logs:
                 # Get employee name by matching GUID from employee list
                 employee_name = get_employee_name_by_guid(client, guid)
-                
-                # Display summary for this employee
-                format_employee_summary(employee_name, time_logs)
-                
+
+                # Display summary or detailed view based on args
+                if args.detailed:
+                    format_detailed_time_entries(employee_name, time_logs)
+                else:
+                    format_employee_summary(employee_name, time_logs)
+
                 # Add to combined data for JSON export
                 all_time_logs.extend(time_logs)
-                
+
                 # Add to grand totals
                 for entry in time_logs:
                     grand_total_regular += entry.get('regularHours', 0)
