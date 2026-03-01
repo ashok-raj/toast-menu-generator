@@ -524,6 +524,26 @@ def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> N
     print(f"  {'Total:':<32} {total_hours:<8.2f}")
     print()
 
+def format_short_table(employee_summaries: List[Dict]) -> None:
+    """
+    Format and display a short summary table for all employees
+
+    Args:
+        employee_summaries: List of dicts with 'name', 'regular', 'overtime' keys
+    """
+    if not employee_summaries:
+        print("No employee data to display")
+        return
+
+    print(f"\n{'Employee Name':<25} {'Regular':<10} {'Overtime':<10}")
+    print(f"{'-'*45}")
+
+    for emp in employee_summaries:
+        name = emp.get('name', 'Unknown')
+        regular = emp.get('regular', 0)
+        overtime = emp.get('overtime', 0)
+        print(f"{name:<25} {regular:<10.2f} {overtime:<10.2f}")
+
 def get_employee_name_by_guid(client: ToastAPIClient, employee_guid: str) -> str:
     """
     Get employee name by matching GUID from the employee list
@@ -626,6 +646,8 @@ def main():
                        help='Enable debug output showing detailed API responses')
     parser.add_argument('-D', '--detailed', action='store_true',
                        help='Show detailed time entries: date, time in, time out, and total hours')
+    parser.add_argument('-S', '--short', action='store_true',
+                       help='Show short summary table: employee name, regular hours, overtime')
     args = parser.parse_args()
     
     # Validate date arguments
@@ -708,6 +730,7 @@ def main():
         all_time_logs = []
         grand_total_regular = 0.0
         grand_total_overtime = 0.0
+        employee_summaries = []
 
         for emp in matches:
             employee_name = f"{emp.get('firstName', '')} {emp.get('lastName', '')}".strip()
@@ -716,18 +739,37 @@ def main():
             time_logs = client.get_employee_time_logs(employee_guid, start_date, end_date, args.debug)
 
             if time_logs:
-                if args.detailed:
+                emp_regular = sum(entry.get('regularHours', 0) for entry in time_logs)
+                emp_overtime = sum(entry.get('overtimeHours', 0) for entry in time_logs)
+
+                if args.short:
+                    employee_summaries.append({
+                        'name': employee_name,
+                        'regular': emp_regular,
+                        'overtime': emp_overtime
+                    })
+                elif args.detailed:
                     format_detailed_time_entries(employee_name, time_logs)
                 else:
                     format_employee_summary(employee_name, time_logs)
                 all_time_logs.extend(time_logs)
 
-                for entry in time_logs:
-                    grand_total_regular += entry.get('regularHours', 0)
-                    grand_total_overtime += entry.get('overtimeHours', 0)
+                grand_total_regular += emp_regular
+                grand_total_overtime += emp_overtime
             else:
-                print(f"{employee_name}: No time logs found")
-                print()
+                if args.short:
+                    employee_summaries.append({
+                        'name': employee_name,
+                        'regular': 0,
+                        'overtime': 0
+                    })
+                else:
+                    print(f"{employee_name}: No time logs found")
+                    print()
+
+        # Display short table if requested
+        if args.short:
+            format_short_table(employee_summaries)
 
         # Display grand totals if multiple employees
         if len(matches) > 1:
@@ -773,20 +815,30 @@ def main():
         all_time_logs = []
         grand_total_regular = 0.0
         grand_total_overtime = 0.0
-        
-        print(f"\n{'='*60}")
-        print(f"TIME LOG SUMMARY ({start_date} to {end_date})")
-        print(f"{'='*60}")
-        
+        employee_summaries = []
+
+        if not args.short:
+            print(f"\n{'='*60}")
+            print(f"TIME LOG SUMMARY ({start_date} to {end_date})")
+            print(f"{'='*60}")
+
         for guid in employee_guids:
             time_logs = client.get_employee_time_logs(guid, start_date, end_date, args.debug)
-            
-            if time_logs:
-                # Get employee name by matching GUID from employee list
-                employee_name = get_employee_name_by_guid(client, guid)
 
-                # Display summary or detailed view based on args
-                if args.detailed:
+            # Get employee name by matching GUID from employee list
+            employee_name = get_employee_name_by_guid(client, guid)
+
+            if time_logs:
+                emp_regular = sum(entry.get('regularHours', 0) for entry in time_logs)
+                emp_overtime = sum(entry.get('overtimeHours', 0) for entry in time_logs)
+
+                if args.short:
+                    employee_summaries.append({
+                        'name': employee_name,
+                        'regular': emp_regular,
+                        'overtime': emp_overtime
+                    })
+                elif args.detailed:
                     format_detailed_time_entries(employee_name, time_logs)
                 else:
                     format_employee_summary(employee_name, time_logs)
@@ -795,14 +847,23 @@ def main():
                 all_time_logs.extend(time_logs)
 
                 # Add to grand totals
-                for entry in time_logs:
-                    grand_total_regular += entry.get('regularHours', 0)
-                    grand_total_overtime += entry.get('overtimeHours', 0)
+                grand_total_regular += emp_regular
+                grand_total_overtime += emp_overtime
             else:
-                # Still get the name even if no time logs found
-                employee_name = get_employee_name_by_guid(client, guid)
-                print(f"{employee_name} (GUID: {guid}): No time logs found")
-                print()
+                if args.short:
+                    employee_summaries.append({
+                        'name': employee_name,
+                        'regular': 0,
+                        'overtime': 0
+                    })
+                else:
+                    print(f"{employee_name} (GUID: {guid}): No time logs found")
+                    print()
+
+        # Display short table if requested
+        if args.short:
+            print(f"\nTIME LOG SUMMARY ({start_date} to {end_date})")
+            format_short_table(employee_summaries)
         
         # Display grand totals only in debug mode
         if args.debug:
