@@ -542,7 +542,10 @@ def format_short_table(employee_summaries: List[Dict]) -> None:
         name = emp.get('name', 'Unknown')
         regular = emp.get('regular', 0)
         overtime = emp.get('overtime', 0)
-        print(f"{name:<25} {regular:<10.2f} {overtime:<10.2f}")
+        if isinstance(regular, str):
+            print(f"{name:<25} {regular:<10} {overtime:<10}")
+        else:
+            print(f"{name:<25} {regular:<10.2f} {overtime:<10.2f}")
 
 def get_employee_name_by_guid(client: ToastAPIClient, employee_guid: str) -> str:
     """
@@ -597,6 +600,34 @@ def find_employees_by_name(client: ToastAPIClient, search_name: str) -> List[Dic
             matches.append(emp)
 
     return matches
+
+def check_javier_next_monday(end_date: str) -> Optional[str]:
+    """
+    Check if the Monday after the pay period end date is a Javier Jose work Monday.
+    Javier works every other Monday. Reference work Monday: 2026-03-09.
+    His hours are reported in the prior week's payroll.
+
+    Args:
+        end_date: End date of pay period in YYYY-MM-DD format
+
+    Returns:
+        The Monday date string if Javier works, None otherwise
+    """
+    reference_work_monday = datetime(2026, 3, 9)
+    end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+
+    # Find the next Monday after end_date
+    days_until_monday = (7 - end_dt.weekday()) % 7
+    if days_until_monday == 0:
+        days_until_monday = 7
+    next_monday = end_dt + timedelta(days=days_until_monday)
+
+    # Check if this Monday is a work Monday (even number of weeks from reference)
+    weeks_diff = (next_monday - reference_work_monday).days // 7
+    if weeks_diff % 2 == 0:
+        return next_monday.strftime("%Y-%m-%d")
+    return None
+
 
 def load_config() -> Dict[str, str]:
     """
@@ -767,6 +798,20 @@ def main():
                     print(f"{employee_name}: No time logs found")
                     print()
 
+        # Check if Javier Jose works the Monday after this pay period
+        javier_monday = check_javier_next_monday(end_date)
+        if javier_monday:
+            if args.short:
+                employee_summaries.append({
+                    'name': 'Javier Jose',
+                    'regular': 'WORKED',
+                    'overtime': ''
+                })
+            else:
+                print(f"Javier Jose:")
+                print(f"  WORKED (Monday {javier_monday})")
+                print()
+
         # Display short table if requested
         if args.short:
             format_short_table(employee_summaries)
@@ -860,11 +905,25 @@ def main():
                     print(f"{employee_name} (GUID: {guid}): No time logs found")
                     print()
 
+        # Check if Javier Jose works the Monday after this pay period
+        javier_monday = check_javier_next_monday(end_date)
+        if javier_monday:
+            if args.short:
+                employee_summaries.append({
+                    'name': 'Javier Jose',
+                    'regular': 'WORKED',
+                    'overtime': ''
+                })
+            else:
+                print(f"Javier Jose:")
+                print(f"  WORKED (Monday {javier_monday})")
+                print()
+
         # Display short table if requested
         if args.short:
             print(f"\nTIME LOG SUMMARY ({start_date} to {end_date})")
             format_short_table(employee_summaries)
-        
+
         # Display grand totals only in debug mode
         if args.debug:
             grand_total_hours = grand_total_regular + grand_total_overtime
