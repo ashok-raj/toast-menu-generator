@@ -1,8 +1,11 @@
 #!/bin/bash
 cd /home/araj/work/ChennaiMasala/toast-menu-generator/
 
+# Use python3 if available, fall back to python
+PYTHON=$(command -v python3 || command -v python)
+
 # Get the full output
-output=$(python emptime.py -t -S)
+output=$($PYTHON emptime.py -t -S)
 
 # Extract the subject line
 subject=$(echo "$output" | grep "TIME LOG SUMMARY" | head -1)
