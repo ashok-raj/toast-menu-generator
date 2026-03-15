@@ -811,6 +811,17 @@ def main():
                 print(f"Javier Jose:")
                 print(f"  WORKED (Monday {javier_monday})")
                 print()
+        else:
+            if args.short:
+                employee_summaries.append({
+                    'name': 'Javier Jose',
+                    'regular': 'DID NOT WORK',
+                    'overtime': ''
+                })
+            else:
+                print(f"Javier Jose:")
+                print(f"  DNW")
+                print()
 
         # Display short table if requested
         if args.short:
@@ -918,6 +929,17 @@ def main():
                 print(f"Javier Jose:")
                 print(f"  WORKED (Monday {javier_monday})")
                 print()
+        else:
+            if args.short:
+                employee_summaries.append({
+                    'name': 'Javier Jose',
+                    'regular': 'DID NOT WORK',
+                    'overtime': ''
+                })
+            else:
+                print(f"Javier Jose:")
+                print(f"  DNW")
+                print()
 
         # Display short table if requested
         if args.short:
@@ -937,17 +959,7 @@ def main():
             print(f"Total Employees Processed: {processed_count}")
             print(f"{'='*60}")
         
-        # Save detailed data to JSON file
-        if all_time_logs:
-            filename = f"time_logs_detailed_{start_date}_to_{end_date}.json"
-            try:
-                with open(filename, 'w') as f:
-                    json.dump(all_time_logs, f, indent=2)
-                print(f"\nDetailed time log entries saved to {filename}")
-                print(f"Total detailed entries: {len(all_time_logs)}")
-            except Exception as e:
-                print(f"Error saving detailed file: {e}")
-        else:
+        if not all_time_logs:
             print("No time logs found for any of the specified employees.")
     
     else:
