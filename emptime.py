@@ -200,10 +200,12 @@ class ToastAPIClient:
                     print(f"  Employee: {entry_employee_first} {entry_employee_last}")
                     print(f"  GUID: {entry_employee_guid}")
                     print(f"  Business Date: {business_date}")
+                    in_time_12hr = format_time_12hr(in_date_pst) if in_date_pst != 'N/A' else 'N/A'
+                    out_time_12hr = format_time_12hr(out_date_pst) if out_date_pst != 'N/A' else 'N/A'
                     print(f"  Clock In (UTC): {in_date_utc}")
-                    print(f"  Clock In (PST): {in_date_pst}")
+                    print(f"  Clock In (PT):  {in_time_12hr}")
                     print(f"  Clock Out (UTC): {out_date_utc}")
-                    print(f"  Clock Out (PST): {out_date_pst}")
+                    print(f"  Clock Out (PT):  {out_time_12hr}")
                     print(f"  Regular Hours: {regular_hours}")
                     print(f"  Overtime Hours: {overtime_hours}")
                     print(f"  Total Hours: {total_hours}")
@@ -374,6 +376,19 @@ def convert_utc_to_pst(utc_datetime_str: str) -> str:
         print(f"Warning: Could not convert datetime {utc_datetime_str} to PST: {e}")
         return utc_datetime_str
 
+def format_time_12hr(iso_datetime_str: str) -> str:
+    """Convert ISO datetime string to 12-hour time format (e.g., '2:30pm')"""
+    try:
+        if 'T' in iso_datetime_str:
+            time_part = iso_datetime_str.split('T')[1][:5]
+            hour, minute = int(time_part[:2]), time_part[3:5]
+            period = 'am' if hour < 12 else 'pm'
+            display_hour = hour % 12 or 12
+            return f"{display_hour:02d}:{minute}{period}"
+    except Exception:
+        pass
+    return 'N/A'
+
 def is_within_pst_date_range(utc_datetime_str: str, start_date: str, end_date: str) -> bool:
     """
     Check if UTC datetime falls within PST date range
@@ -493,7 +508,7 @@ def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> N
 
     print(f"\n{employee_name}:")
     print(f"  {'Date':<12} {'Time In':<10} {'Time Out':<10} {'Hours':<8}")
-    print(f"  {'-'*42}")
+    print(f"  {'-'*40}")
 
     total_hours = 0.0
 
@@ -508,14 +523,11 @@ def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> N
 
         if in_date_utc:
             pst_in = convert_utc_to_pst(in_date_utc)
-            # Extract just the time part (HH:MM)
-            if 'T' in pst_in:
-                time_in = pst_in.split('T')[1][:5]
+            time_in = format_time_12hr(pst_in)
 
         if out_date_utc:
             pst_out = convert_utc_to_pst(out_date_utc)
-            if 'T' in pst_out:
-                time_out = pst_out.split('T')[1][:5]
+            time_out = format_time_12hr(pst_out)
 
         regular_hours = entry.get('regularHours', 0)
         overtime_hours = entry.get('overtimeHours', 0)
@@ -524,8 +536,8 @@ def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> N
 
         print(f"  {business_date:<12} {time_in:<10} {time_out:<10} {entry_hours:<8.2f}")
 
-    print(f"  {'-'*42}")
-    print(f"  {'Total:':<32} {total_hours:<8.2f}")
+    print(f"  {'-'*40}")
+    print(f"  {'Total:':<34}{total_hours:<8.2f}")
     print()
 
 def format_short_table(employee_summaries: List[Dict]) -> None:
