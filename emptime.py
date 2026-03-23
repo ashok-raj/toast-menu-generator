@@ -117,10 +117,13 @@ class ToastAPIClient:
             start_dt = datetime.strptime(start_date, "%Y-%m-%d")
             end_dt = datetime.strptime(end_date, "%Y-%m-%d")
             
-            # Start from beginning of start date PST (which is 8 hours later in UTC)
-            start_utc = start_dt + timedelta(hours=8)
-            # End at end of end date PST (which is 8 hours + 23:59:59 later in UTC)
-            end_utc = end_dt + timedelta(hours=8+23, minutes=59, seconds=59)
+            # Convert Pacific Time dates to UTC (handles PST/PDT automatically)
+            from zoneinfo import ZoneInfo
+            pacific = ZoneInfo("America/Los_Angeles")
+            start_pacific = start_dt.replace(tzinfo=pacific)
+            end_pacific = (end_dt + timedelta(hours=23, minutes=59, seconds=59)).replace(tzinfo=pacific)
+            start_utc = start_pacific.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+            end_utc = end_pacific.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
             
             # Format exactly as Toast API expects: yyyy-MM-dd'T'HH:mm:ss.SSS-0000
             start_datetime = start_utc.strftime("%Y-%m-%dT%H:%M:%S.000-0000")
@@ -360,9 +363,10 @@ def convert_utc_to_pst(utc_datetime_str: str) -> str:
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
 
-        # Convert to PST (UTC-8)
-        pst = timezone(timedelta(hours=-8))
-        pst_dt = dt.astimezone(pst)
+        # Convert to Pacific Time (handles PST/PDT automatically)
+        from zoneinfo import ZoneInfo
+        pacific = ZoneInfo("America/Los_Angeles")
+        pst_dt = dt.astimezone(pacific)
 
         return pst_dt.isoformat()
 
