@@ -389,6 +389,29 @@ def format_time_12hr(iso_datetime_str: str) -> str:
         pass
     return 'N/A'
 
+def check_time_anomalies(time_logs: List[Dict]) -> bool:
+    """Check if any time entries have anomalies: next-day clock-out or clock-in/out within 2 minutes."""
+    for entry in time_logs:
+        in_date_utc = entry.get('inDate', '')
+        out_date_utc = entry.get('outDate', '')
+        if not in_date_utc or not out_date_utc:
+            continue
+        pst_in = convert_utc_to_pst(in_date_utc)
+        pst_out = convert_utc_to_pst(out_date_utc)
+        # Check next-day clock-out
+        if 'T' in pst_in and 'T' in pst_out:
+            if pst_in.split('T')[0] != pst_out.split('T')[0]:
+                return True
+        # Check clock-in and clock-out within 2 minutes
+        try:
+            dt_in = datetime.fromisoformat(pst_in)
+            dt_out = datetime.fromisoformat(pst_out)
+            if abs((dt_out - dt_in).total_seconds()) < 120:
+                return True
+        except Exception:
+            pass
+    return False
+
 def is_within_pst_date_range(utc_datetime_str: str, start_date: str, end_date: str) -> bool:
     """
     Check if UTC datetime falls within PST date range
@@ -511,6 +534,7 @@ def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> N
     print(f"  {'-'*40}")
 
     total_hours = 0.0
+    next_day_warnings = []
 
     for entry in time_logs:
         business_date = entry.get('businessDate', 'N/A')
@@ -520,6 +544,7 @@ def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> N
         # Extract time portion from PST converted datetime
         time_in = 'N/A'
         time_out = 'N/A'
+        warning = False
 
         if in_date_utc:
             pst_in = convert_utc_to_pst(in_date_utc)
@@ -529,15 +554,26 @@ def format_detailed_time_entries(employee_name: str, time_logs: List[Dict]) -> N
             pst_out = convert_utc_to_pst(out_date_utc)
             time_out = format_time_12hr(pst_out)
 
+        # Check if clock-out is on a different day than clock-in
+        if in_date_utc and out_date_utc:
+            in_date = convert_utc_to_pst(in_date_utc).split('T')[0]
+            out_date = convert_utc_to_pst(out_date_utc).split('T')[0]
+            if in_date != out_date:
+                warning = True
+                next_day_warnings.append(business_date)
+
         regular_hours = entry.get('regularHours', 0)
         overtime_hours = entry.get('overtimeHours', 0)
         entry_hours = regular_hours + overtime_hours
         total_hours += entry_hours
 
-        print(f"  {business_date:<12} {time_in:<10} {time_out:<10} {entry_hours:<8.2f}")
+        date_col = f"{business_date}*" if warning else business_date
+        print(f"  {date_col:<12} {time_in:<10} {time_out:<10} {entry_hours:<8.2f}")
 
     print(f"  {'-'*40}")
     print(f"  {'Total:':<34}{total_hours:<8.2f}")
+    if next_day_warnings:
+        print(f"\n  * WARNING: Clock-out on next day (possible auto clock-out) for: {', '.join(next_day_warnings)}")
     print()
 
 def format_short_table(employee_summaries: List[Dict]) -> None:
@@ -551,17 +587,27 @@ def format_short_table(employee_summaries: List[Dict]) -> None:
         print("No employee data to display")
         return
 
-    print(f"\n{'Employee Name':<25} {'Regular':<10} {'Overtime':<10}")
-    print(f"{'-'*45}")
+    print(f"\n  {'Employee Name':<25} {'Regular':<10} {'Overtime':<10}")
+    print(f"  {'-'*45}")
 
+    has_warnings = False
     for emp in employee_summaries:
         name = emp.get('name', 'Unknown')
         regular = emp.get('regular', 0)
         overtime = emp.get('overtime', 0)
-        if isinstance(regular, str):
-            print(f"{name:<25} {regular:<10} {overtime:<10}")
+        if name.endswith(' *'):
+            has_warnings = True
+            prefix = '* '
+            name = name[:-2]
         else:
-            print(f"{name:<25} {regular:<10.2f} {overtime:<10.2f}")
+            prefix = '  '
+        if isinstance(regular, str):
+            print(f"{prefix}{name:<25} {regular:<10} {overtime:<10}")
+        else:
+            print(f"{prefix}{name:<25} {regular:<10.2f} {overtime:<10.2f}")
+
+    if has_warnings:
+        print(f"\n* WARNING: Time anomaly detected (next-day clock-out or clock-in/out within 2 mins)")
 
 def get_employee_name_by_guid(client: ToastAPIClient, employee_guid: str) -> str:
     """
@@ -790,8 +836,9 @@ def main():
                 emp_overtime = sum(entry.get('overtimeHours', 0) for entry in time_logs)
 
                 if args.short:
+                    display_name = f"{employee_name} *" if check_time_anomalies(time_logs) else employee_name
                     employee_summaries.append({
-                        'name': employee_name,
+                        'name': display_name,
                         'regular': emp_regular,
                         'overtime': emp_overtime
                     })
@@ -905,8 +952,9 @@ def main():
                 emp_overtime = sum(entry.get('overtimeHours', 0) for entry in time_logs)
 
                 if args.short:
+                    display_name = f"{employee_name} *" if check_time_anomalies(time_logs) else employee_name
                     employee_summaries.append({
-                        'name': employee_name,
+                        'name': display_name,
                         'regular': emp_regular,
                         'overtime': emp_overtime
                     })
