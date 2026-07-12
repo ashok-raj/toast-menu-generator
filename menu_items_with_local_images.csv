@@ -1,10 +1,10 @@
 item_name,group,price,image_files,image_count,has_images
-Healthy Tandoori Combo,Healthy Combos,,Healthy_Tandoori_Combo.jpg,1,Yes
+King Fisher,Beer,,,0,No
 Lemonade (Fountain),Soft Drinks,,Lemonade_Fountain.jpg,1,Yes
 Chettinad Shrimp Masala,Shrimp Curries,,,0,No
 Vegetable Pakora,Vegetarian Appetizers,,Vegetable_Pakora.jpg,1,Yes
-Healthy Malai Kebab Combo,Healthy Combos,,Healthy_Malai_Kebab_Combo.jpg,1,Yes
 Chicken Sheek Kebab,Non-Vegetarian Appetizers,,Chicken_Sheek_Kebab.jpg,1,Yes
+Blue Moon (Draft),Draft Beers,,,0,No
 Mughlai Chicken Korma,Chicken Curries,,,0,No
 Pongal,Rice Corner,,Pongal.jpg,1,Yes
 Rava Dosa,Dosa,,Rava_Dosa.jpg,1,Yes
@@ -20,18 +20,24 @@ Coke (Fountain),Soft Drinks,,Coke_Fountain.jpg,1,Yes
 Chilli Chicken (Dry),Indo-Chinese,,,0,No
 Healthy Paneer Combo,Healthy Combos,,Healthy_Paneer_Combo.jpg,1,Yes
 Panner Naan,Bread Corner,,,0,No
+Kingfisher (12 oz),Beer,,,0,No
 Ghee Roast,Dosa,,,0,No
+Corking fee,Wine,,,0,No
 Chennai Paper Roast,Dosa,,Chennai_Paper_Roast.jpg,1,Yes
 Lamb Vindaloo,Lamb Curries,,,0,No
 Sweet Lassi,Lassi,,Sweet_Lassi.jpg,1,Yes
+Lager,Beer,,,0,No
 Ghee,Extras,,,0,No
 Onion Uttapam,Dosa,,,0,No
+Mint Chutney (4oz),Extras,,,0,No
 Chicken Rogan Josh,Chicken Curries,,,0,No
 Lamb Chukka,Lamb Curries,,Lamb_Chukka.jpg,1,Yes
 Vegetable Cutlet,Vegetarian Appetizers,,Vegetable_Cutlet.jpg,1,Yes
+Modelo (Draft),Draft Beers,,,0,No
 Onion Tomato Chilli Uttapam,Dosa,,,0,No
 Sambar @Table,Extras,,,0,No
 Veg Noodles,Indo-Chinese,,Veg_Noodles.jpg,1,Yes
+1947 Lager Reserve,Beer,,,0,No
 Masala Ghee Roast,Dosa,,,0,No
 Egg Noodles,Indo-Chinese,,Egg_Noodles.jpg,1,Yes
 Salad,Extras,,,0,No
@@ -40,11 +46,12 @@ Paneer Tikka Masala,Vegetarian Curries,,,0,No
 Lamb Rogan Josh,Lamb Curries,,,0,No
 Naan,Bread Corner,,Naan.jpg,1,Yes
 Extra Poori,Bread Corner,,,0,No
+House White (Glass),Wine,,,0,No
 Paneer Vindaloo,Vegetarian Curries,,,0,No
 Fanta (Bottle),Soft Drinks,,Fanta_Bottle.jpg,1,Yes
 Butter Naan,Bread Corner,,Butter_Naan.jpg,1,Yes
+Rasam @Table,Extras,,,0,No
 Onion Rava Dosa,Dosa,,,0,No
-Healthy Chicken Tikka Combo,Healthy Combos,,Healthy_Chicken_Tikka_Combo.jpg,1,Yes
 Onion Chilli Rava Masala Dosa,Dosa,,,0,No
 Chennai Family Dosa,Dosa,,,0,No
 Masala Dosa,Dosa,,,0,No
@@ -53,14 +60,18 @@ Plain Dosa,Dosa,,,0,No
 Mango Lassi,Lassi,,Mango_Lassi.jpg,1,Yes
 Tamarind Rice,Rice Corner,,Tamarind_Rice.jpg,1,Yes
 Onion Kulcha,Bread Corner,,Onion_Kulcha.jpg,1,Yes
+La Reserve White 375ml (Bottle),Wine,,,0,No
 Baigan Bhartha,Vegetarian Curries,,,0,No
 Chicken Saag,Chicken Curries,,,0,No
 Thair Vada,Vegetarian Appetizers,,Thair_Vada.jpg,1,Yes
+Snapple (Bottle),Soft Drinks,,Snapple_Bottle.jpg,1,Yes
+Vijay Amritraj Reserve (Red) Bottle,Wine,,,0,No
 Egg Biriyani,Rice Corner,,Egg_Biriyani.jpg,1,Yes
 Onion Dosa,Dosa,,,0,No
 Shrimp Saag,Shrimp Curries,,,0,No
 Shrimp Fried Rice,Indo-Chinese,,Shrimp_Fried_Rice.jpg,1,Yes
 Gobi Manchurian,Indo-Chinese,,Gobi_Manchurian.jpg,1,Yes
+Healthy Tandoori Combo,Healthy Combos,,Healthy_Tandoori_Combo.jpg,1,Yes
 Channa (Chole) Masala,Vegetarian Curries,,,0,No
 Sambar,Extras,,,0,No
 Strawberry Lassi,Lassi,,Strawberry_Lassi.jpg,1,Yes
@@ -69,13 +80,15 @@ Muglai Lamb Korma,Lamb Curries,,,0,No
 Sambar Vada,Vegetarian Appetizers,,Sambar_Vada.jpg,1,Yes
 Egg Curry,Vegetarian Curries,,,0,No
 Aloo Gobi Masala,Vegetarian Curries,,,0,No
+La Reserve Red 750ml (Bottle),Wine,,,0,No
 Rice,Extras,,,0,No
 Chicken Jalfrezi,Chicken Curries,,,0,No
 Goat Curry,Lamb Curries,,,0,No
+Healthy  Chicken Sheek Kebab,Healthy Combos,,Healthy__Chicken_Sheek_Kebab.jpg,1,Yes
 Masala Omelette,Non-Vegetarian Appetizers,,Masala_Omelette.jpg,1,Yes
 Mango Kulfi,Dessert,,,0,No
 Fresh Lime Soda,Soft Drinks,,Fresh_Lime_Soda.jpg,1,Yes
-Chicken Vindaloo,Chicken Curries,,,0,No
+Chicken Vindaloo,Chicken Curries,,Chicken_Vindaloo.jpg,1,Yes
 Rasam,Extras,,,0,No
 Lamb (Butter Masala) Makhani,Lamb Curries,,,0,No
 Chappati,Bread Corner,,Chappati.jpg,1,Yes
@@ -86,50 +99,61 @@ Chicken Noodles,Indo-Chinese,,Chicken_Noodles.jpg,1,Yes
 Kadai Panner,Vegetarian Curries,,,0,No
 Mutter Paneer,Vegetarian Curries,,,0,No
 Raita @Table,Extras,,,0,No
+Masala Tea,Tea,,,0,No
 Carrot Halwa w/ Vanilla Ice Cream,Dessert,,,0,No
 Ice Tea (Fountain),Soft Drinks,,Ice_Tea_Fountain.jpg,1,Yes
 Mini Cheese Dosa,Kids Corner,,,0,No
 Sprite (Bottle),Soft Drinks,,Sprite_Bottle.jpg,1,Yes
 Mini Idly,Kids Corner,,Mini_Idly.jpg,1,Yes
 Non-Vegetarian Combo,Lunch Combo,,Non-Vegetarian_Combo.jpg,1,Yes
+House Red (Bottle),Wine,,,0,No
 Paneer (Butter Masala) Makhani,Vegetarian Curries,,,0,No
+Deschutes Fresh Squeeze (Draft),Draft Beers,,,0,No
 Tomato Uttapam,Dosa,,,0,No
 Chettinad Vegetable Curry,Vegetarian Curries,,,0,No
 Carrot Halwa,Dessert,,,0,No
 Chicken Tikka Masala,Chicken Curries,,Chicken_Tikka_Masala.jpg,1,Yes
 Chicken Manchurian,Indo-Chinese,,Chicken_Manchurian.png,1,Yes
+Healthy Malai Kebab Combo,Healthy Combos,,Healthy_Malai_Kebab_Combo.jpg,1,Yes
 Palak Paneer,Vegetarian Curries,,,0,No
 Tandoori Sampler,Non-Vegetarian Appetizers,,Tandoori_Sampler.jpg,1,Yes
+Haywards 5000 (22 Oz),Beer,,,0,No
 Diet Coke (Fountain),Soft Drinks,,Diet_Coke_Fountain.jpg,1,Yes
 Onion Rava Masala Dosa,Dosa,,,0,No
 Chilli Chicken (Gravy),Indo-Chinese,,,0,No
 Chicken Curry,Chicken Curries,,,0,No
-Healthy  Chicken Sheek Kebab,Healthy Combos,,Healthy__Chicken_Sheek_Kebab.jpg,1,Yes
 Chennai Fish Curry,Fish Curries,,,0,No
 Veg Chinese Spring Dosa,Dosa,,,0,No
+La Reserve Red 375ml (Bottle),Wine,,,0,No
 Shrimp Jalfrezi,Shrimp Curries,,,0,No
-Gulab Jamun,Dessert,,,0,No
+Gulab Jamun,Dessert,,Gulab_Jamun.jpg,1,Yes
 Chennai Chicken 65,Non-Vegetarian Appetizers,,Chennai_Chicken_65.jpg,1,Yes
 Shrimp Korma,Shrimp Curries,,,0,No
 Cheese Masala Dosa,Dosa,,,0,No
 Chicken Tikka Dosa,Dosa,,,0,No
 Channa Poori,Bread Corner,,Channa_Poori.jpg,1,Yes
 Plain Uttapam,Dosa,,,0,No
+Parota w/ Chicken Curry,Bread Corner,,,0,No
 Shrimp Noodles,Indo-Chinese,,,0,No
 Potato Masala (8oz),Extras,,,0,No
-Dal Makhani,Vegetarian Curries,,,0,No
+Dal Makhani,Vegetarian Curries,,Dal_Makhani.jpg,1,Yes
 Shrimp Biriyani,Rice Corner,,,0,No
 Ghee Dosa,Dosa,,,0,No
+La Reserve White 750ml (Bottle),Wine,,,0,No
+Vijay Amritraj Reserve (White) Bottle,Wine,,,0,No
 Curd Rice,Rice Corner,,Curd_Rice.jpg,1,Yes
 Malai Kebab,Non-Vegetarian Appetizers,,Malai_Kebab.jpg,1,Yes
 Sprite (Fountain),Soft Drinks,,Sprite_Fountain.jpg,1,Yes
+Chennai Filter Coffee,Coffee,,,0,No
 Chennai Masala Paper Roast,Dosa,,,0,No
 Idly Sambar,Vegetarian Appetizers,,Idly_Sambar.jpg,1,Yes
 Fanta (Fountain),Soft Drinks,,Fanta_Fountain.png,1,Yes
 Lamb Saag,Lamb Curries,,,0,No
 Chole Dosa,Dosa,,,0,No
+Taj Mahal (22 Oz),Beer,,,0,No
 Shrimp Vindaloo,Shrimp Curries,,,0,No
 Pickle,Extras,,,0,No
+Mango Chutney (4oz),Extras,,,0,No
 Fish  Fry (Pompano),Non-Vegetarian Appetizers,,Fish__Fry_Pompano.jpg,1,Yes
 Navrathan Korma,Vegetarian Curries,,,0,No
 Roti,Bread Corner,,Roti.jpg,1,Yes
@@ -137,7 +161,6 @@ Lamb Curry,Lamb Curries,,,0,No
 Assorted Bread Basket,Bread Corner,,Assorted_Bread_Basket.jpg,1,Yes
 Tandoori Chicken,Non-Vegetarian Appetizers,,Tandoori_Chicken.png,1,Yes
 Bhindi Masala,Vegetarian Curries,,,0,No
-Healthy Lamb Sheek Kebab Combo,Healthy Combos,,Healthy_Lamb_Sheek_Kebab_Combo.jpg,1,Yes
 Chicken Biriyani,Rice Corner,,Chicken_Biriyani.png,1,Yes
 Chettinad Chicken Curry,Chicken Curries,,,0,No
 Parota w/ Veg Curry,Bread Corner,,Parota_w_Veg_Curry.jpg,1,Yes
@@ -151,6 +174,7 @@ Egg Dosa,Dosa,,,0,No
 Papad,Extras,,,0,No
 Shrimp Rogan Josh,Shrimp Curries,,,0,No
 Goat Biriyani,Rice Corner,,,0,No
+Casatta Ice Cream,Dessert,,,0,No
 Malai Kofta,Vegetarian Curries,,,0,No
 Lamb Sheek Kebab,Non-Vegetarian Appetizers,,Lamb_Sheek_Kebab.jpg,1,Yes
 Vegetable Samosa,Vegetarian Appetizers,,Vegetable_Samosa.jpg,1,Yes
@@ -165,7 +189,6 @@ Medu Vada,Vegetarian Appetizers,,Medu_Vada.jpg,1,Yes
 Extra Parota,Bread Corner,,,0,No
 Lamb Kheema Dosa,Dosa,,,0,No
 Coke (Bottle),Soft Drinks,,Coke_Bottle.jpg,1,Yes
-Potato Masala @Table,Extras,,,0,No
 Gulab Jamun w/ Vanilla Ice Cream,Dessert,,,0,No
 Mushroom Saag,Vegetarian Curries,,,0,No
 Mysore Masala Dosa,Dosa,,Mysore_Masala_Dosa.jpg,1,Yes
@@ -175,18 +198,24 @@ Onion Chilli Uttapam,Dosa,,,0,No
 Rasam Vada,Vegetarian Appetizers,,Rasam_Vada.jpg,1,Yes
 Chicken Tikka,Non-Vegetarian Appetizers,,Chicken_Tikka.jpg,1,Yes
 Brownie w/ Vanilla Ice Cream,Dessert,,,0,No
+Healthy Lamb Sheek Kebab Combo,Healthy Combos,,Healthy_Lamb_Sheek_Kebab_Combo.jpg,1,Yes
+Taj Mahal (12 Oz),Beer,,,0,No
 Poori Masala,Bread Corner,,Poori_Masala.jpg,1,Yes
 Rava Masala Dosa,Dosa,,Rava_Masala_Dosa.jpg,1,Yes
 Chicken Strips W/ Fries,Kids Corner,,Chicken_Strips_W_Fries.jpg,1,Yes
-Chicken (Butter Masala) Makhani,Chicken Curries,,,0,No
+Chicken (Butter Masala) Makhani,Chicken Curries,,Chicken_Butter_Masala_Makhani.jpg,1,Yes
 Lemon Rice,Rice Corner,,Lemon_Rice.jpg,1,Yes
+House White(Bottle),Wine,,,0,No
 Egg Fried Rice,Indo-Chinese,,,0,No
+Healthy Chicken Tikka Combo,Healthy Combos,,Healthy_Chicken_Tikka_Combo.jpg,1,Yes
+Snapple,Juice,,,0,No
 Chicken Fried Rice,Indo-Chinese,,,0,No
 Ice Cream,Dessert,,,0,No
 Chilli Panner (Gravy),Indo-Chinese,,,0,No
 Lamb Jalfrezi,Lamb Curries,,,0,No
 Goat Chukka,Lamb Curries,,,0,No
-Rasamalai (2 Pieces),Dessert,,,0,No
+Rasamalai (2 Pieces),Dessert,,Rasamalai_2_Pieces.jpg,1,Yes
 Spinach Masala Dosa,Dosa,,,0,No
 Vegetable Uttapam,Dosa,,,0,No
 Raita,Extras,,,0,No
+House Red (Glass),Wine,,,0,No

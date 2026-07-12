@@ -1,34 +1,46 @@
 Menu Items Missing Pictures
 ==================================================
 
+Beer:
+----
+  • 1947 Lager Reserve
+  • Haywards 5000 (22 Oz)
+  • King Fisher
+  • Kingfisher (12 oz)
+  • Lager
+  • Taj Mahal (12 Oz)
+  • Taj Mahal (22 Oz)
+
 Bread Corner:
 ------------
   • Extra Parota
   • Extra Poori
   • Panner Naan
+  • Parota w/ Chicken Curry
 
 Chicken Curries:
 ---------------
   • Chettinad Chicken Curry
-  • Chicken (Butter Masala) Makhani
   • Chicken Curry
   • Chicken Jalfrezi
   • Chicken Rogan Josh
   • Chicken Saag
-  • Chicken Vindaloo
   • Mughlai Chicken Korma
+
+Coffee:
+------
+  • Chennai Filter Coffee
 
 Dessert:
 -------
   • Brownie w/ Vanilla Ice Cream
   • Carrot Halwa
   • Carrot Halwa w/ Vanilla Ice Cream
-  • Gulab Jamun
+  • Casatta Ice Cream
   • Gulab Jamun w/ Vanilla Ice Cream
   • Ice Cream
   • Mango Kulfi
   • Payasam
-  • Rasamalai (2 Pieces)
 
 Dosa:
 ----
@@ -62,17 +74,25 @@ Dosa:
   • Vegetable Uttapam
   • Wheat Flour Dosa
 
+Draft Beers:
+-----------
+  • Blue Moon (Draft)
+  • Deschutes Fresh Squeeze (Draft)
+  • Modelo (Draft)
+
 Extras:
 ------
   • Chutney (8oz)
   • Ghee
+  • Mango Chutney (4oz)
+  • Mint Chutney (4oz)
   • Papad
   • Pickle
   • Potato Masala (8oz)
-  • Potato Masala @Table
   • Raita
   • Raita @Table
   • Rasam
+  • Rasam @Table
   • Rice
   • Salad
   • Sambar
@@ -93,6 +113,10 @@ Indo-Chinese:
   • Chilli Panner (Gravy)
   • Egg Fried Rice
   • Shrimp Noodles
+
+Juice:
+-----
+  • Snapple
 
 Kids Corner:
 -----------
@@ -130,6 +154,10 @@ Shrimp Curries:
   • Shrimp Tikka Masala
   • Shrimp Vindaloo
 
+Tea:
+---
+  • Masala Tea
+
 Vegetarian Curries:
 ------------------
   • Aloo Gobi Masala
@@ -137,7 +165,6 @@ Vegetarian Curries:
   • Bhindi Masala
   • Channa (Chole) Masala
   • Chettinad Vegetable Curry
-  • Dal Makhani
   • Dal Tadka
   • Egg Curry
   • Eggplant Curry (Andhra Style)
@@ -153,4 +180,18 @@ Vegetarian Curries:
   • Paneer Vindaloo
   • Vegetable Jalfrezi
 
-Total items missing pictures: 116
+Wine:
+----
+  • Corking fee
+  • House Red (Bottle)
+  • House Red (Glass)
+  • House White (Glass)
+  • House White(Bottle)
+  • La Reserve Red 375ml (Bottle)
+  • La Reserve Red 750ml (Bottle)
+  • La Reserve White 375ml (Bottle)
+  • La Reserve White 750ml (Bottle)
+  • Vijay Amritraj Reserve (Red) Bottle
+  • Vijay Amritraj Reserve (White) Bottle
+
+Total items missing pictures: 139
